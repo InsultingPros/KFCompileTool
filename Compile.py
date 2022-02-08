@@ -392,12 +392,14 @@ def compileMe():
     # create INT files
     if r.bCreateINT == 'True':
         dbg.print_separatorBox('Creating INT file!')
-        os.system(ucc + ' dumpint ' + r.mutatorName + '.u')
+        os.chdir(r.pathSystem)
+        subprocess.run(['ucc', 'dumpint', r.pathFileU])
 
     # create UZ2 files
     if r.bMakeRedirect == 'True':
         dbg.print_separatorBox('Creating UZ2 file!')
-        os.system(ucc + ' Compress ' + r.mutatorName + '.u')
+        os.chdir(r.pathSystem)
+        subprocess.run(['ucc', 'compress', r.pathFileU])
 
     # cleanup!
     util.cleanup()
