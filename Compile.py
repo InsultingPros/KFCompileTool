@@ -136,10 +136,15 @@ class utility():
         elif type == 3:
             return r.mutatorName + '.u.uz2'
     
+    def remove_readonly(self, func, path, _):
+        # Clear the readonly bit and reattempt the removal
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+
     # remove new created 'classes' folder on alternate dir style
     def dir_remove(self, dir):
         if os.path.exists(dir):
-            shutil.rmtree(dir, ignore_errors=True)
+            shutil.rmtree(dir, onerror=self.remove_readonly)
 
     # check and delete the file
     def deleteCompileDirFiles(self, file):
@@ -366,7 +371,7 @@ def compileMe():
             dbg.stopMe(4)
 
         classes = os.path.join(destdir, 'Classes')
-        shutil.rmtree(classes, ignore_errors=True)
+        util.dir_remove(classes)
         os.makedirs(classes)
         # now copy everything!
         for path, subdirs, files in os.walk(sources):
@@ -412,15 +417,17 @@ def handle_Files():
     # get System dir
     sys = util.getSysDir(r.dir_Compile)
     # get file paths
-    dir_uFile = util.getModFileTypes(sys, 1)
+    dir_uFile   = util.getModFileTypes(sys, 1)
     dir_uclFile = util.getModFileTypes(sys, 2)
     dir_uz2file = util.getModFileTypes(sys, 3)
+    dir_intFile = util.getModFileTypes(sys, 4)
 
     # do we want files being moved to desired client / server directory?
     if r.bMoveFiles == 'True':
         dest = util.getSysDir(r.dir_MoveTo)
         util.copyFile4System(dir_uFile, dest)
         util.copyFile4System(dir_uclFile, dest)
+        util.copyFile4System(dir_intFile, dest)
         print('>>> Moving files to CLIENT directory.')
 
     if r.bMakeRelease == 'True':
