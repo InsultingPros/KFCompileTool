@@ -136,6 +136,7 @@ class utility():
         elif type == 3:
             return r.mutatorName + '.u.uz2'
     
+    # https://docs.python.org/3/library/shutil.html#rmtree-example
     def remove_readonly(self, func, path, _):
         # Clear the readonly bit and reattempt the removal
         os.chmod(path, stat.S_IWRITE)
