@@ -94,17 +94,14 @@ class types():
 class utility():
     # post compilation / failure cleanup
     def cleanup(self):
-        # remove this garbage, its being created every time
+        # remove steamapp_id.txt, its being created every time
         util.deleteCompileDirFiles(r.pathFileGarbage)
 
          # remove compfile, we don't need it
         util.deleteCompileDirFiles(_mincompfile)
 
         if r.bICompileOutsideofKF is True:
-            # set write permissions, just in case
-            os.chmod(os.path.join(r.dir_Compile, r.mutatorName), stat.S_IWRITE)
             self.dir_remove(os.path.join(r.dir_Compile, r.mutatorName))
-
 
     # check if compilation was successfull
     # let's just check if package.u is created or not
@@ -168,7 +165,7 @@ class utility():
         if os.path.isfile(src) is False:
             return
         shutil.copy(src, dest)
-        print('> Copied: ' + src + ' to ' + dest)
+        print('> Copied:  ' + src + '  --->  ' + dest)
 
     # get / create redirect directory in selected directory
     def get_dirRedirect(self, dir: str) -> str:
@@ -187,7 +184,7 @@ class configHelper(utility, types):
         # save the case
         config.optionxform = str
 
-        config['Global'] =  self.def_Global
+        config['Global']  = self.def_Global
         config['TestMut'] = self.def_Mod
 
         with open(dir, 'w') as configfile:
@@ -281,8 +278,7 @@ class Debug():
             print('dir_Compile          :', r.dir_Compile)
             print('dir_MoveTo           :', r.dir_MoveTo)
             print('dir_ReleaseOutput    :', r.dir_ReleaseOutput)
-            print('dir_Classes          :', r.dir_Classes)
-            print('\n')
+            print('dir_Classes          :', r.dir_Classes, '\n')
             # sections
             print('EditPackages         :', r.EditPackages)
             print('bICompileOutsideofKF :', r.bICompileOutsideofKF)
@@ -427,13 +423,14 @@ def handle_Files():
 
     # do we want files being moved to desired client / server directory?
     if r.bMoveFiles is True:
+        print('>>> Moving files to CLIENT directory.\n')
         dest = util.getSysDir(r.dir_MoveTo)
         util.copyFile4System(dir_uFile,   dest)
         util.copyFile4System(dir_uclFile, dest)
         util.copyFile4System(dir_intFile, dest)
-        print('>>> Moving files to CLIENT directory.')
 
     if r.bMakeRelease is True:
+        print('>>> Moving files to output directory.\n')
         x = os.path.join(r.dir_ReleaseOutput, r.mutatorName)
         # if 'Redirect' folder doesn't exist, create it
         if not os.path.exists(x):
@@ -451,9 +448,11 @@ def handle_Files():
 
     # remove the file from system after everything else is done
     if r.bMakeRedirect is True:
+        print('\n>>> Moving redirect file to redirect directory.\n')
         util.copyFile4System(dir_uz2file, r.dir_Compile + '/' + _redirectFolderName)
         util.deleteCompileDirFiles(dir_uz2file)
 
+    print('\n')
     # press any key to close
     os.system('pause')
 
