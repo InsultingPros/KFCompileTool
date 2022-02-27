@@ -44,5 +44,5 @@ If you feel lost after this description - check the [`CompileSettings.ini`] (it'
 
 ## Requirements
 
-- Script was made by [Python 3.10.2](https://docs.python.org/release/3.10.2/).
+- Script was made by [Python 3.10.2](https://docs.python.org/release/3.10.2/) and linted with [MyPy](http://mypy-lang.org/).
 - KF 1 SDK / UCC.exe. Obviously.
