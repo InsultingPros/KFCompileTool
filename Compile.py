@@ -7,16 +7,17 @@
 #################################################################################
 import os, shutil, sys, subprocess, stat
 from configparser import ConfigParser
+from xmlrpc.client import boolean
 
 #################################################################################
 #                              'CONSTANTS'
 #################################################################################
-_lineSeparator      =   '######################################################'
-_settingsFile       =   'CompileSettings.ini'
-_mincompfile        =   'kfcompile.ini'
-_redirectFolderName =   'Redirect'
-_bDebug             =   True
-_list               =   ['.git','*.md','Docs', 'LICENSE']
+_lineSeparator      :str  =   '######################################################'
+_settingsFile       :str  =   'CompileSettings.ini'
+_mincompfile        :str  =   'kfcompile.ini'
+_redirectFolderName :str  =   'Redirect'
+_bDebug             :bool =   True
+_list               :list =   ['.git','*.md','Docs', 'LICENSE']
 
 #################################################################################
 #                                UTILITY
@@ -25,28 +26,28 @@ _list               =   ['.git','*.md','Docs', 'LICENSE']
 # contains 'runtime' variables
 class runtimeVars():
     # Global
-    mutatorName             =   'fallback mutatorName'
-    dir_Compile             =   'fallback dir_Compile'
-    dir_MoveTo              =   'fallback dir_MoveTo'
-    dir_ReleaseOutput       =   'fallback dir_ReleaseOutput'
-    dir_Classes             =   'fallback dir_Classes'
+    mutatorName            :str  =   'fallback mutatorName'
+    dir_Compile            :str  =   'fallback dir_Compile'
+    dir_MoveTo             :str  =   'fallback dir_MoveTo'
+    dir_ReleaseOutput      :str  =   'fallback dir_ReleaseOutput'
+    dir_Classes            :str  =   'fallback dir_Classes'
     # sections
-    EditPackages            =   'fallback EditPackages'
-    bICompileOutsideofKF    =   'fallback bICompileOutsideofKF'
-    bAltDirectories         =   'fallback bAltDirectories'
-    bMoveFiles              =   'fallback bMoveFiles'
-    bCreateINT              =   'fallback bCreateINT'
-    bMakeRedirect           =   'fallback bMakeRedirect'
-    bMakeRelease            =   'fallback bMakeRelease'
+    EditPackages           :str  =   'fallback EditPackages'
+    bICompileOutsideofKF   :bool =   False
+    bAltDirectories        :bool =   False
+    bMoveFiles             :bool =   False
+    bCreateINT             :bool =   False
+    bMakeRedirect          :bool =   False
+    bMakeRelease           :bool =   False
     # random package related
-    pathSystem              =   'fallback pathSystem'
-    pathFileU               =   'fallback pathFileU'
-    pathFileUCL             =   'fallback pathFileUCL'
-    pathFileUZ2             =   'fallback pathFileUZ2'
-    pathFileINT             =   'fallback pathFileINT'
-    pathFileGarbage         =   'fallback pathFileGarbage'
+    pathSystem             :str  =   'fallback pathSystem'
+    pathFileU              :str  =   'fallback pathFileU'
+    pathFileUCL            :str  =   'fallback pathFileUCL'
+    pathFileUZ2            :str  =   'fallback pathFileUZ2'
+    pathFileINT            :str  =   'fallback pathFileINT'
+    pathFileGarbage        :str  =   'fallback pathFileGarbage'
     # other
-    pathMoveTo              =   'fallback pathMoveTo'
+    pathMoveTo             :str  =   'fallback pathMoveTo'
 
 
 # contains lists, dicts used to populate kfcompile.ini / CompileSettings.ini
@@ -59,12 +60,12 @@ class types():
                                  'dir_Classes'          :   r'C:\Users\Shtoyan\Desktop\Projects'}
 
     def_Mod                 =   {'EditPackages'         :   'TestMutParent,TestMut',
-                                 'bICompileOutsideofKF' :   'False',
-                                 'bAltDirectories'      :   'False',
-                                 'bMoveFiles'           :   'False',
-                                 'bCreateINT'           :   'False',
-                                 'bMakeRedirect'        :   'False',
-                                 'bMakeRelease'         :   'False'}
+                                 'bICompileOutsideofKF' :   False,
+                                 'bAltDirectories'      :   False,
+                                 'bMoveFiles'           :   False,
+                                 'bCreateINT'           :   False,
+                                 'bMakeRedirect'        :   False,
+                                 'bMakeRelease'         :   False}
 
     # kfcompile.ini
     # [Editor.EditorEngine]
@@ -100,7 +101,7 @@ class utility():
          # remove compfile, we don't need it
         util.deleteCompileDirFiles(_mincompfile)
 
-        if r.bICompileOutsideofKF == 'True':
+        if r.bICompileOutsideofKF is True:
             # set write permissions, just in case
             os.chmod(os.path.join(r.dir_Compile, r.mutatorName), stat.S_IWRITE)
             self.dir_remove(os.path.join(r.dir_Compile, r.mutatorName))
@@ -135,7 +136,7 @@ class utility():
             return r.mutatorName + '.ucl'
         elif type == 3:
             return r.mutatorName + '.u.uz2'
-    
+
     # https://docs.python.org/3/library/shutil.html#rmtree-example
     def remove_readonly(self, func, path, _):
         # Clear the readonly bit and reattempt the removal
@@ -270,7 +271,7 @@ class Debug():
 
     # DEBUG / info
     def debug_Logs(self):
-        if bool(_bDebug) is True:
+        if _bDebug is True:
             # type some information
             print(_lineSeparator + '\n')
             print(_settingsFile)
@@ -283,12 +284,12 @@ class Debug():
             print('\n')
             # sections
             print('EditPackages         : ' + r.EditPackages)
-            print('bICompileOutsideofKF : ' + r.bICompileOutsideofKF)
-            print('bAltDirectories      : ' + r.bAltDirectories)
-            print('bMoveFiles           : ' + r.bMoveFiles)
-            print('bCreateINT           : ' + r.bCreateINT)
-            print('bMakeRedirect        : ' + r.bMakeRedirect)
-            print('bMakeRelease         : ' + r.bMakeRelease)
+            print('bICompileOutsideofKF :',   r.bICompileOutsideofKF)
+            print('bAltDirectories      :',   r.bAltDirectories)
+            print('bMoveFiles           :',   r.bMoveFiles)
+            print('bCreateINT           :',   r.bCreateINT)
+            print('bMakeRedirect        :',   r.bMakeRedirect)
+            print('bMakeRelease         :',   r.bMakeRelease)
 
 #################################################################################
 #                                FUNCTIONS
@@ -328,12 +329,12 @@ def initSettings():
         dbg.stopMe(2)
 
     r.EditPackages          =   config[r.mutatorName]['EditPackages']
-    r.bICompileOutsideofKF  =   config[r.mutatorName]['bICompileOutsideofKF']
-    r.bAltDirectories       =   config[r.mutatorName]['bAltDirectories']
-    r.bMoveFiles            =   config[r.mutatorName]['bMoveFiles']
-    r.bCreateINT            =   config[r.mutatorName]['bCreateINT']
-    r.bMakeRedirect         =   config[r.mutatorName]['bMakeRedirect']
-    r.bMakeRelease          =   config[r.mutatorName]['bMakeRelease']
+    r.bICompileOutsideofKF  =   config[r.mutatorName].getboolean('bICompileOutsideofKF')
+    r.bAltDirectories       =   config[r.mutatorName].getboolean('bAltDirectories')
+    r.bMoveFiles            =   config[r.mutatorName].getboolean('bMoveFiles')
+    r.bCreateINT            =   config[r.mutatorName].getboolean('bCreateINT')
+    r.bMakeRedirect         =   config[r.mutatorName].getboolean('bMakeRedirect')
+    r.bMakeRelease          =   config[r.mutatorName].getboolean('bMakeRelease')
 
     # RANDOM
     r.pathSystem            =   util.getSysDir(r.dir_Compile)
@@ -361,12 +362,12 @@ def compileMe():
     # if our mod files are in other directory, just copy-paste everything from there
 
     # if mod folder is outside, delete old dir and copy-paste new one
-    if r.bICompileOutsideofKF == 'True':
+    if r.bICompileOutsideofKF is True:
         util.dir_remove(destdir)
         shutil.copytree(srcdir, destdir, copy_function=shutil.copy, ignore=shutil.ignore_patterns(*_list))
 
     # if we use alternative directory style, we need to do some work
-    if r.bAltDirectories == 'True':
+    if r.bAltDirectories is True:
         sources = os.path.join(srcdir, 'sources')
         if os.path.exists(sources) is False:
             dbg.stopMe(4)
@@ -396,13 +397,13 @@ def compileMe():
         dbg.stopMe(5)
 
     # create INT files
-    if r.bCreateINT == 'True':
+    if r.bCreateINT is True:
         dbg.print_separatorBox('Creating INT file!')
         os.chdir(r.pathSystem)
         subprocess.run(['ucc', 'dumpint', r.pathFileU])
 
     # create UZ2 files
-    if r.bMakeRedirect == 'True':
+    if r.bMakeRedirect is True:
         dbg.print_separatorBox('Creating UZ2 file!')
         os.chdir(r.pathSystem)
         subprocess.run(['ucc', 'compress', r.pathFileU])
@@ -424,14 +425,14 @@ def handle_Files():
     dir_intFile = util.getModFileTypes(sys, 4)
 
     # do we want files being moved to desired client / server directory?
-    if r.bMoveFiles == 'True':
+    if r.bMoveFiles is True:
         dest = util.getSysDir(r.dir_MoveTo)
         util.copyFile4System(dir_uFile, dest)
         util.copyFile4System(dir_uclFile, dest)
         util.copyFile4System(dir_intFile, dest)
         print('>>> Moving files to CLIENT directory.')
 
-    if r.bMakeRelease == 'True':
+    if r.bMakeRelease is True:
         x = os.path.join(r.dir_ReleaseOutput, r.mutatorName)
         # if 'Redirect' folder doesn't exist, create it
         if not os.path.exists(x):
@@ -440,7 +441,7 @@ def handle_Files():
         util.copyFile4System(dir_uFile, x)
         util.copyFile4System(dir_uclFile, x)
 
-        if r.bMakeRedirect == 'True':
+        if r.bMakeRedirect is True:
             y = os.path.join(x, _redirectFolderName)
             if not os.path.exists(y):
                 os.makedirs(y)
@@ -448,7 +449,8 @@ def handle_Files():
             util.copyFile4System(dir_uz2file, y)
 
     # remove the file from system after everything else is done
-    if r.bMakeRedirect == 'True':
+    if r.bMakeRedirect is True:
+        util.copyFile4System(dir_uz2file, r.dir_Compile + '/' + _redirectFolderName)
         util.deleteCompileDirFiles(dir_uz2file)
 
     # press any key to close
