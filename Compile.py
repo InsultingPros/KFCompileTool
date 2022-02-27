@@ -168,7 +168,7 @@ class utility():
         if os.path.isfile(src) is False:
             return
         shutil.copy(src, dest)
-        print(dest)
+        print('> Copied: ' + src + ' to ' + dest)
 
     # get / create redirect directory in selected directory
     def get_dirRedirect(self, dir: str) -> str:
@@ -247,7 +247,7 @@ class configHelper(utility, types):
 
 class Debug():
     # stop right here
-    def stopMe(self, err: int):
+    def catchError(self, err: int):
         prefix :str = '>>> TERMINATION WARNING: '
         if err == 0:
             print(prefix + 'CompileSettings.ini was not found.')
@@ -267,8 +267,8 @@ class Debug():
     # nice message box
     def print_separatorBox(self, msg: str):
         print('\n' + _lineSeparator + '\n')
-        print(msg + '\n')
-        print(_lineSeparator + '\n')
+        print(msg)
+        print('\n' + _lineSeparator + '\n')
 
     # DEBUG / info
     def debug_Logs(self):
@@ -304,13 +304,13 @@ def initSettings():
     # check if settings.ini exists in same directory
     if os.path.isfile(dirSettingsIni) is False:
         cfghlp.create_settingsFile(dirSettingsIni)
-        dbg.stopMe(0)
+        dbg.catchError(0)
 
     config = ConfigParser()
     config.read(dirSettingsIni)
     # get global section and set main vars
     if config.has_section('Global') is False:
-        dbg.stopMe(1)
+        dbg.catchError(1)
 
     # GLOBAL
     # accept cmdline arguments
@@ -327,7 +327,7 @@ def initSettings():
     # SECTIONS
     # check if exist
     if config.has_section(r.mutatorName) is False:
-        dbg.stopMe(2)
+        dbg.catchError(2)
 
     r.EditPackages          =   config[r.mutatorName]['EditPackages']
     r.bICompileOutsideofKF  =   config[r.mutatorName].getboolean('bICompileOutsideofKF')
@@ -371,7 +371,7 @@ def compileMe():
     if r.bAltDirectories is True:
         sources = os.path.join(srcdir, 'sources')
         if os.path.exists(sources) is False:
-            dbg.stopMe(4)
+            dbg.catchError(4)
 
         classes = os.path.join(destdir, 'Classes')
         util.dir_remove(classes)
@@ -387,7 +387,7 @@ def compileMe():
     ucc = os.path.join(r.pathSystem, 'UCC.exe')
     # check if we have UCC
     if os.path.isfile(ucc) is False:
-        dbg.stopMe(3)
+        dbg.catchError(3)
 
     # start the actual compilation! FINALLY!!!
     subprocess.run([ucc, 'make', 'ini=' + _mincompfile, '-EXPORTCACHE'])
@@ -395,7 +395,7 @@ def compileMe():
     # we failed here, cleanup and shut down
     if util.compilationFailed() is True:
         util.cleanup()
-        dbg.stopMe(5)
+        dbg.catchError(5)
 
     # create INT files
     if r.bCreateINT is True:
@@ -428,7 +428,7 @@ def handle_Files():
     # do we want files being moved to desired client / server directory?
     if r.bMoveFiles is True:
         dest = util.getSysDir(r.dir_MoveTo)
-        util.copyFile4System(dir_uFile, dest)
+        util.copyFile4System(dir_uFile,   dest)
         util.copyFile4System(dir_uclFile, dest)
         util.copyFile4System(dir_intFile, dest)
         print('>>> Moving files to CLIENT directory.')
@@ -439,7 +439,7 @@ def handle_Files():
         if not os.path.exists(x):
             os.makedirs(x)
         # copy files
-        util.copyFile4System(dir_uFile, x)
+        util.copyFile4System(dir_uFile,   x)
         util.copyFile4System(dir_uclFile, x)
 
         if r.bMakeRedirect is True:
