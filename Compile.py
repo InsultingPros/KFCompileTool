@@ -7,17 +7,16 @@
 #################################################################################
 import os, shutil, sys, subprocess, stat
 from configparser import ConfigParser
-from xmlrpc.client import boolean
 
 #################################################################################
 #                              'CONSTANTS'
 #################################################################################
-_lineSeparator      :str  =   '######################################################'
-_settingsFile       :str  =   'CompileSettings.ini'
-_mincompfile        :str  =   'kfcompile.ini'
-_redirectFolderName :str  =   'Redirect'
-_bDebug             :bool =   True
-_list               :list =   ['.git','*.md','Docs', 'LICENSE']
+_lineSeparator      :str       =   '######################################################'
+_settingsFile       :str       =   'CompileSettings.ini'
+_mincompfile        :str       =   'kfcompile.ini'
+_redirectFolderName :str       =   'Redirect'
+_bDebug             :bool      =   True
+_list               :list[str] =   ['.git','*.md','Docs', 'LICENSE']
 
 #################################################################################
 #                                UTILITY
@@ -109,7 +108,7 @@ class utility():
 
     # check if compilation was successfull
     # let's just check if package.u is created or not
-    def compilationFailed(self):
+    def compilationFailed(self) -> bool:
         dir = self.getSysDir(r.dir_Compile)
         ufile = self.getModFileTypes(dir, 1)
         if not os.path.exists(os.path.join(dir, ufile)):
@@ -117,7 +116,7 @@ class utility():
         return False
 
     # get file paths from type
-    def getModFileTypes(self, dir, type: int):
+    def getModFileTypes(self, dir: str, type: int) -> str:
         if type == 1:
             ext = '.u'
         elif type == 2:
@@ -136,6 +135,8 @@ class utility():
             return r.mutatorName + '.ucl'
         elif type == 3:
             return r.mutatorName + '.u.uz2'
+        else:
+            return 'fallback name + extension!'
 
     # https://docs.python.org/3/library/shutil.html#rmtree-example
     def remove_readonly(self, func, path, _):
@@ -144,7 +145,7 @@ class utility():
         func(path)
 
     # remove new created 'classes' folder on alternate dir style
-    def dir_remove(self, dir):
+    def dir_remove(self, dir: str):
         if os.path.exists(dir):
             shutil.rmtree(dir, onerror=self.remove_readonly)
 
@@ -170,7 +171,7 @@ class utility():
         print(dest)
 
     # get / create redirect directory in selected directory
-    def get_dirRedirect(self, dir):
+    def get_dirRedirect(self, dir: str) -> str:
         destdir = os.path.join(dir, _redirectFolderName)
         # check if path exist and create otherwise
         if not os.path.exists(destdir):
@@ -201,7 +202,7 @@ class configHelper(utility, types):
         os.path.join(os.getcwd(), _mincompfile)
 
         # write single line
-        def write_string2config(text):
+        def write_string2config(text: str):
             with open(_mincompfile, 'a') as f:
                 f.writelines([text + '\n'])
 
@@ -246,25 +247,25 @@ class configHelper(utility, types):
 
 class Debug():
     # stop right here
-    def stopMe(self, a: int):
-        e = '>>> TERMINATION WARNING: '
-        if a == 0:
-            print(e + 'CompileSettings.ini was not found.')
-        elif a == 1:
-            print(e + 'Global section not found in CompileSettings.ini.')
-        elif a == 2:
-            print(e + r.mutatorName + ' section not found in CompileSettings.ini')
-        elif a == 3:
-            print(e + 'UCC.exe was not found in compile directory. Install SDK and retry!')
-        elif a == 4:
-            print(e + 'Alternative Directory is True, but `sources` folder NOT FOUND!')
-        elif a == 5:
-            print(e + 'Compilation FAILED!')
+    def stopMe(self, err: int):
+        prefix :str = '>>> TERMINATION WARNING: '
+        if err == 0:
+            print(prefix + 'CompileSettings.ini was not found.')
+        elif err == 1:
+            print(prefix + 'Global section not found in CompileSettings.ini.')
+        elif err == 2:
+            print(prefix + r.mutatorName + ' section not found in CompileSettings.ini')
+        elif err == 3:
+            print(prefix + 'UCC.exe was not found in compile directory. Install SDK and retry!')
+        elif err == 4:
+            print(prefix + 'Alternative Directory is True, but `sources` folder NOT FOUND!')
+        elif err == 5:
+            print(prefix + 'Compilation FAILED!')
         os.system('pause')
         exit()
 
     # nice message box
-    def print_separatorBox(self, msg):
+    def print_separatorBox(self, msg: str):
         print('\n' + _lineSeparator + '\n')
         print(msg + '\n')
         print(_lineSeparator + '\n')
@@ -276,20 +277,20 @@ class Debug():
             print(_lineSeparator + '\n')
             print(_settingsFile)
             #  global
-            print('mutatorName          : ' + r.mutatorName)
-            print('dir_Compile          : ' + r.dir_Compile)
-            print('dir_MoveTo           : ' + r.dir_MoveTo)
-            print('dir_ReleaseOutput    : ' + r.dir_ReleaseOutput)
-            print('dir_Classes          : ' + r.dir_Classes)
+            print('mutatorName          :', r.mutatorName)
+            print('dir_Compile          :', r.dir_Compile)
+            print('dir_MoveTo           :', r.dir_MoveTo)
+            print('dir_ReleaseOutput    :', r.dir_ReleaseOutput)
+            print('dir_Classes          :', r.dir_Classes)
             print('\n')
             # sections
-            print('EditPackages         : ' + r.EditPackages)
-            print('bICompileOutsideofKF :',   r.bICompileOutsideofKF)
-            print('bAltDirectories      :',   r.bAltDirectories)
-            print('bMoveFiles           :',   r.bMoveFiles)
-            print('bCreateINT           :',   r.bCreateINT)
-            print('bMakeRedirect        :',   r.bMakeRedirect)
-            print('bMakeRelease         :',   r.bMakeRelease)
+            print('EditPackages         :', r.EditPackages)
+            print('bICompileOutsideofKF :', r.bICompileOutsideofKF)
+            print('bAltDirectories      :', r.bAltDirectories)
+            print('bMoveFiles           :', r.bMoveFiles)
+            print('bCreateINT           :', r.bCreateINT)
+            print('bMakeRedirect        :', r.bMakeRedirect)
+            print('bMakeRelease         :', r.bMakeRelease)
 
 #################################################################################
 #                                FUNCTIONS
