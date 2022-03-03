@@ -11,12 +11,12 @@ from configparser import ConfigParser
 #################################################################################
 #                              'CONSTANTS'
 #################################################################################
-_lineSeparator      :str       =   '######################################################'
-_settingsFile       :str       =   'CompileSettings.ini'
-_mincompfile        :str       =   'kfcompile.ini'
-_redirectFolderName :str       =   'Redirect'
-_bDebug             :bool      =   True
-_list               :list[str] =   ['.git','*.md','Docs', 'LICENSE']
+LINE_SEPARATOR:    str       = '######################################################'
+SETTINGS_FILE:     str       = 'CompileSettings.ini'
+CMPL_CONFIG:       str       = 'kfcompile.ini'
+REDIRECT_DIR_NAME: str       = 'Redirect'
+DEBUG:             bool      = True
+IGNORE_LIST:       list[str] = ['.git','*.md','Docs', 'LICENSE']
 
 #################################################################################
 #                                UTILITY
@@ -25,40 +25,40 @@ _list               :list[str] =   ['.git','*.md','Docs', 'LICENSE']
 # contains 'runtime' variables
 class runtimeVars():
     # Global
-    mutatorName            :str  =   'fallback mutatorName'
-    dir_Compile            :str  =   'fallback dir_Compile'
-    dir_MoveTo             :str  =   'fallback dir_MoveTo'
-    dir_ReleaseOutput      :str  =   'fallback dir_ReleaseOutput'
-    dir_Classes            :str  =   'fallback dir_Classes'
+    mutatorName:            str  =   'fallback mutatorName'
+    dir_Compile:            str  =   'fallback dir_Compile'
+    dir_MoveTo:             str  =   'fallback dir_MoveTo'
+    dir_ReleaseOutput:      str  =   'fallback dir_ReleaseOutput'
+    dir_Classes:            str  =   'fallback dir_Classes'
     # sections
-    EditPackages           :str  =   'fallback EditPackages'
-    bICompileOutsideofKF   :bool =   False
-    bAltDirectories        :bool =   False
-    bMoveFiles             :bool =   False
-    bCreateINT             :bool =   False
-    bMakeRedirect          :bool =   False
-    bMakeRelease           :bool =   False
+    EditPackages:           str  =   'fallback EditPackages'
+    bICompileOutsideofKF:   bool =   False
+    bAltDirectories:        bool =   False
+    bMoveFiles:             bool =   False
+    bCreateINT:             bool =   False
+    bMakeRedirect:          bool =   False
+    bMakeRelease:           bool =   False
     # random package related
-    pathSystem             :str  =   'fallback pathSystem'
-    pathFileU              :str  =   'fallback pathFileU'
-    pathFileUCL            :str  =   'fallback pathFileUCL'
-    pathFileUZ2            :str  =   'fallback pathFileUZ2'
-    pathFileINT            :str  =   'fallback pathFileINT'
-    pathFileGarbage        :str  =   'fallback pathFileGarbage'
+    pathCmpSystem:             str  =   'fallback pathCmpSystem'
+    pathFileU:              str  =   'fallback pathFileU'
+    pathFileUCL:            str  =   'fallback pathFileUCL'
+    pathFileUZ2:            str  =   'fallback pathFileUZ2'
+    pathFileINT:            str  =   'fallback pathFileINT'
+    pathFileGarbage:        str  =   'fallback pathFileGarbage'
     # other
-    pathMoveTo             :str  =   'fallback pathMoveTo'
+    pathMoveTo:             str  =   'fallback pathMoveTo'
 
 
 # contains lists, dicts used to populate kfcompile.ini / CompileSettings.ini
 class types():
     # CompileSettings.ini
-    def_Global              =   {'mutatorName'          :   'TestMut',
-                                 'dir_Compile'          :   r'D:\Games\SteamLibrary\steamapps\common\KillingFloor',
-                                 'dir_MoveTo'           :   r'D:\Games\KF Dedicated Server',
-                                 'dir_ReleaseOutput'    :   r'C:\Users\USER\Desktop\Mutators',
-                                 'dir_Classes'          :   r'C:\Users\Shtoyan\Desktop\Projects'}
+    def_Global: dict[str, str] = {'mutatorName'          :   'TestMut',
+                                  'dir_Compile'          :   r'D:\Games\SteamLibrary\steamapps\common\KillingFloor',
+                                  'dir_MoveTo'           :   r'D:\Games\KF Dedicated Server',
+                                  'dir_ReleaseOutput'    :   r'C:\Users\USER\Desktop\Mutators',
+                                  'dir_Classes'          :   r'C:\Users\Shtoyan\Desktop\Projects'}
 
-    def_Mod                 =   {'EditPackages'         :   'TestMutParent,TestMut',
+    def_Mod                   = {'EditPackages'         :   'TestMutParent,TestMut',
                                  'bICompileOutsideofKF' :   False,
                                  'bAltDirectories'      :   False,
                                  'bMoveFiles'           :   False,
@@ -68,52 +68,44 @@ class types():
 
     # kfcompile.ini
     # [Editor.EditorEngine]
-    def_EditPackages        =   ['Core', 'Engine', 'Fire', 'Editor', 'UnrealEd', 'IpDrv', 'UWeb', 'GamePlay',
-                                 'UnrealGame', 'XGame', 'XInterface', 'XAdmin', 'XWebAdmin', 'GUI2K4', 'xVoting',
-                                 'UTV2004c', 'UTV2004s', 'ROEffects', 'ROEngine', 'ROInterface', 'Old2k4', 'KFMod',
-                                 'KFChar', 'KFGui', 'GoodKarma', 'KFMutators', 'KFStoryGame', 'KFStoryUI',
-                                 'SideShowScript', 'FrightScript']
+    def_EditPackages: list[str] = ['Core', 'Engine', 'Fire', 'Editor', 'UnrealEd', 'IpDrv', 'UWeb', 'GamePlay',
+                                   'UnrealGame', 'XGame', 'XInterface', 'XAdmin', 'XWebAdmin', 'GUI2K4', 'xVoting',
+                                   'UTV2004c', 'UTV2004s', 'ROEffects', 'ROEngine', 'ROInterface', 'Old2k4', 'KFMod',
+                                   'KFChar', 'KFGui', 'GoodKarma', 'KFMutators', 'KFStoryGame', 'KFStoryUI',
+                                   'SideShowScript', 'FrightScript']
 
     # [Engine.Engine]
     # this setting is enough
-    EngineDict              =   {'EditorEngine'         :   'Editor.EditorEngine'}
+    EngineDict: dict[str, str] = {'EditorEngine'    : 'Editor.EditorEngine'}
 
     # [Core.System]
     # this too
-    SysDict                 =   { 'CacheRecordPath'     :   '../System/*.ucl'}
+    SysDict: dict[str, str]    = {'CacheRecordPath' : '../System/*.ucl'}
 
-    def_paths               =   ['../System/*.u', '../Maps/*.rom', '../TestMaps/*.rom', '../Textures/*.utx',
-                                 '../Sounds/*.uax', '../Music/*.umx', '../StaticMeshes/*.usx', '../Animations/*.ukx' ,
-                                 '../Saves/*.uvx', '../Textures/Old2k4/*.utx', '../Sounds/Old2k4/*.uax',
-                                 '../Music/Old2k4/*.umx', '../StaticMeshes/Old2k4/*.usx', '../Animations/Old2k4/*.ukx','../KarmaData/Old2k4/*.ka']
+    def_paths: list[str]    = ['../System/*.u', '../Maps/*.rom', '../TestMaps/*.rom', '../Textures/*.utx',
+                               '../Sounds/*.uax', '../Music/*.umx', '../StaticMeshes/*.usx', '../Animations/*.ukx' ,
+                               '../Saves/*.uvx', '../Textures/Old2k4/*.utx', '../Sounds/Old2k4/*.uax',
+                               '../Music/Old2k4/*.umx', '../StaticMeshes/Old2k4/*.usx', '../Animations/Old2k4/*.ukx','../KarmaData/Old2k4/*.ka']
 
-    def_Suppress            =   ['DevLoad', 'DevSave']
+    def_Suppress: list[str] = ['DevLoad', 'DevSave']
 
 
 # random utility functions
 class utility():
     # post compilation / failure cleanup
-    def cleanup(self):
+    def cleanup(self) -> None:
         # remove steamapp_id.txt, its being created every time
         util.deleteCompileDirFiles(r.pathFileGarbage)
 
          # remove compfile, we don't need it
-        util.deleteCompileDirFiles(_mincompfile)
+        util.deleteCompileDirFiles(CMPL_CONFIG)
 
         if r.bICompileOutsideofKF is True:
             self.dir_remove(os.path.join(r.dir_Compile, r.mutatorName))
 
-    # check if compilation was successfull
-    # let's just check if package.u is created or not
-    def compilationFailed(self) -> bool:
-        dir = self.getSysDir(r.dir_Compile)
-        ufile = self.getModFileTypes(dir, 1)
-        if not os.path.exists(os.path.join(dir, ufile)):
-            return True
-        return False
-
     # get file paths from type
     def getModFileTypes(self, dir: str, type: int) -> str:
+        ext: str
         if type == 1:
             ext = '.u'
         elif type == 2:
@@ -136,32 +128,26 @@ class utility():
             return 'fallback name + extension!'
 
     # https://docs.python.org/3/library/shutil.html#rmtree-example
-    def remove_readonly(self, func, path, _):
+    def remove_readonly(self, func, path, _) -> None:
         # Clear the readonly bit and reattempt the removal
         os.chmod(path, stat.S_IWRITE)
         func(path)
 
     # remove new created 'classes' folder on alternate dir style
-    def dir_remove(self, dir: str):
+    def dir_remove(self, dir: str) -> None:
         if os.path.exists(dir):
             shutil.rmtree(dir, onerror=self.remove_readonly)
 
     # check and delete the file
-    def deleteCompileDirFiles(self, file):
-        if os.path.isfile(os.path.join(r.pathSystem, file)):
-            os.remove(os.path.join(r.pathSystem, file))
+    def deleteCompileDirFiles(self, file: str) -> None:
+        if os.path.isfile(os.path.join(r.pathCmpSystem, file)):
+            os.remove(os.path.join(r.pathCmpSystem, file))
 
     # get system directory
-    def getSysDir(self, basedir) -> str:
+    def getSysDir(self, basedir: str) -> str:
         return os.path.join(basedir, 'System')
 
-    # return list from file content
-    def getReadLines(self, filename) -> list:
-        with open(filename, 'r') as f:
-            contents = f.readlines()
-        return contents
-
-    def copyFile4System(self, src, dest):
+    def copyFile4System(self, src, dest) -> None:
         if os.path.isfile(src) is False:
             return
         shutil.copy(src, dest)
@@ -169,7 +155,7 @@ class utility():
 
     # get / create redirect directory in selected directory
     def get_dirRedirect(self, dir: str) -> str:
-        destdir = os.path.join(dir, _redirectFolderName)
+        destdir = os.path.join(dir, REDIRECT_DIR_NAME)
         # check if path exist and create otherwise
         if not os.path.exists(destdir):
             os.makedirs(destdir)
@@ -190,56 +176,56 @@ class configHelper(utility, types):
         with open(dir, 'w') as configfile:
             config.write(configfile, space_around_delimiters=False)
 
-        print('>>> WARING: ' + _settingsFile + ' was created in same directory. PLEASE go and edit it to fit your neeeds.')
+        print('>>> WARING: ' + SETTINGS_FILE + ' was created in same directory. PLEASE go and edit it to fit your neeeds.')
 
     # create DEFAULT config file if none found
-    def create_defMincompfile(self, sys_dir):
+    def create_defMincompfile(self, sys_dir) -> None:
         # print(sys_dir)
         # make sure we don't have old files
-        os.path.join(os.getcwd(), _mincompfile)
+        os.path.join(os.getcwd(), CMPL_CONFIG)
 
         # write single line
-        def write_string2config(text: str):
-            with open(_mincompfile, 'a') as f:
+        def wStrToConfig(text: str) -> None:
+            with open(CMPL_CONFIG, 'a') as f:
                 f.writelines([text + '\n'])
 
         # add lines at the end of the file
-        def write_list2config(key, list):
-            with open(_mincompfile, 'a') as f:
+        def wListToConfig(key: str, list: list[str]) -> None:
+            with open(CMPL_CONFIG, 'a') as f:
                 for x in list:
                     f.writelines([key + '=' + x + '\n'])
 
         # write key-value from dictionary
-        def write_dict2config(dict):
-            with open(_mincompfile, 'a') as f:
+        def wDictToConfig(dict: dict[str, str]) -> None:
+            with open(CMPL_CONFIG, 'a') as f:
                 for k, v in dict.items():
                     f.writelines([k + '=' + v + '\n'])
 
         # SECTION 1
-        write_string2config('[Editor.EditorEngine]')
+        wStrToConfig('[Editor.EditorEngine]')
 
-        write_list2config('EditPackages', self.def_EditPackages)
-        write_string2config('\n')
+        wListToConfig('EditPackages', self.def_EditPackages)
+        wStrToConfig('\n')
 
         # SECTION 2
-        write_string2config('[Engine.Engine]')
-        write_dict2config(self.EngineDict)
-        write_string2config('\n')
+        wStrToConfig('[Engine.Engine]')
+        wDictToConfig(self.EngineDict)
+        wStrToConfig('\n')
 
         # SECTION 3
-        write_string2config('[Core.System]')
-        write_dict2config(self.SysDict)
+        wStrToConfig('[Core.System]')
+        wDictToConfig(self.SysDict)
 
-        write_list2config('Paths', self.def_paths)
-        write_list2config('Suppress', self.def_Suppress)
-        write_string2config('\n')
+        wListToConfig('Paths', self.def_paths)
+        wListToConfig('Suppress', self.def_Suppress)
+        wStrToConfig('\n')
 
         # SECTION 4
         # if we don't add this section, we will get some other garbage being written
-        write_string2config('[ROFirstRun]')
-        write_string2config('ROFirstRun=1094\n')
+        wStrToConfig('[ROFirstRun]')
+        wStrToConfig('ROFirstRun=1094\n')
 
-        shutil.move(_mincompfile, sys_dir)
+        shutil.move(CMPL_CONFIG, sys_dir)
 
 
 class Debug():
@@ -262,17 +248,17 @@ class Debug():
         exit()
 
     # nice message box
-    def print_separatorBox(self, msg: str):
-        print('\n' + _lineSeparator + '\n')
+    def print_separatorBox(self, msg: str) -> None:
+        print('\n' + LINE_SEPARATOR + '\n')
         print(msg)
-        print('\n' + _lineSeparator + '\n')
+        print('\n' + LINE_SEPARATOR + '\n')
 
     # DEBUG / info
-    def debug_Logs(self):
-        if _bDebug is True:
+    def debug_Logs(self) -> None:
+        if DEBUG is True:
             # type some information
-            print(_lineSeparator + '\n')
-            print(_settingsFile)
+            print(LINE_SEPARATOR + '\n')
+            print(SETTINGS_FILE)
             #  global
             print('mutatorName          :', r.mutatorName)
             print('dir_Compile          :', r.dir_Compile)
@@ -293,10 +279,10 @@ class Debug():
 #################################################################################
 
 # read config file and define all variables
-def initSettings():
+def initSettings() -> None:
     # self directory
-    dirScript = os.path.dirname(os.path.realpath(__file__))
-    dirSettingsIni = os.path.join(dirScript, _settingsFile)
+    dirScript: str = os.path.dirname(os.path.realpath(__file__))
+    dirSettingsIni: str = os.path.join(dirScript, SETTINGS_FILE)
     # check if settings.ini exists in same directory
     if os.path.isfile(dirSettingsIni) is False:
         cfghlp.create_settingsFile(dirSettingsIni)
@@ -334,42 +320,42 @@ def initSettings():
     r.bMakeRelease          =   config[r.mutatorName].getboolean('bMakeRelease')
 
     # RANDOM
-    r.pathSystem            =   util.getSysDir(r.dir_Compile)
-    r.pathFileU             =   util.getModFileTypes(r.pathSystem, 1)
-    r.pathFileUCL           =   util.getModFileTypes(r.pathSystem, 2)
-    r.pathFileUZ2           =   util.getModFileTypes(r.pathSystem, 3)
-    r.pathFileINT           =   util.getModFileTypes(r.pathSystem, 4)
-    r.pathFileGarbage       =   os.path.join(r.pathSystem, 'steam_appid.txt')
+    r.pathCmpSystem         =   util.getSysDir(r.dir_Compile)
+    r.pathFileU             =   util.getModFileTypes(r.pathCmpSystem, 1)
+    r.pathFileUCL           =   util.getModFileTypes(r.pathCmpSystem, 2)
+    r.pathFileUZ2           =   util.getModFileTypes(r.pathCmpSystem, 3)
+    r.pathFileINT           =   util.getModFileTypes(r.pathCmpSystem, 4)
+    r.pathFileGarbage       =   os.path.join(r.pathCmpSystem, 'steam_appid.txt')
 
     # make sure there are no old files
-    util.deleteCompileDirFiles(_mincompfile)
+    util.deleteCompileDirFiles(CMPL_CONFIG)
 
     # update editPackages and create the kf.ini
     types.def_EditPackages.extend(r.EditPackages.split(','))
-    cfghlp.create_defMincompfile(r.pathSystem)
+    cfghlp.create_defMincompfile(r.pathCmpSystem)
 
 
-def compileMe():
+def compileMe() -> None:
     # delete files before compilation start, since UCC is ghei
     util.deleteCompileDirFiles(r.pathFileU)
     util.deleteCompileDirFiles(r.pathFileUCL)
 
-    srcdir = os.path.join(r.dir_Classes, r.mutatorName)
-    destdir = os.path.join(r.dir_Compile, r.mutatorName)
+    srcdir: str = os.path.join(r.dir_Classes, r.mutatorName)
+    destdir: str = os.path.join(r.dir_Compile, r.mutatorName)
     # if our mod files are in other directory, just copy-paste everything from there
 
     # if mod folder is outside, delete old dir and copy-paste new one
     if r.bICompileOutsideofKF is True:
         util.dir_remove(destdir)
-        shutil.copytree(srcdir, destdir, copy_function=shutil.copy, ignore=shutil.ignore_patterns(*_list))
+        shutil.copytree(srcdir, destdir, copy_function=shutil.copy, ignore=shutil.ignore_patterns(*IGNORE_LIST))
 
     # if we use alternative directory style, we need to do some work
     if r.bAltDirectories is True:
-        sources = os.path.join(srcdir, 'sources')
+        sources: str = os.path.join(srcdir, 'sources')
         if os.path.exists(sources) is False:
             dbg.catchError(4)
 
-        classes = os.path.join(destdir, 'Classes')
+        classes: str = os.path.join(destdir, 'Classes')
         util.dir_remove(classes)
         os.makedirs(classes)
         # now copy everything!
@@ -380,77 +366,70 @@ def compileMe():
 
     dbg.print_separatorBox('COMPILING: ' + r.mutatorName)
 
-    ucc = os.path.join(r.pathSystem, 'UCC.exe')
+    ucc: str = os.path.join(r.pathCmpSystem, 'UCC.exe')
     # check if we have UCC
     if os.path.isfile(ucc) is False:
         dbg.catchError(3)
 
     # start the actual compilation! FINALLY!!!
-    subprocess.run([ucc, 'make', 'ini=' + _mincompfile, '-EXPORTCACHE'])
+    subprocess.run([ucc, 'make', 'ini=' + CMPL_CONFIG, '-EXPORTCACHE'])
 
-    # we failed here, cleanup and shut down
-    if util.compilationFailed() is True:
+    # let's just check if package.u is created or not
+    # else we failed -> cleanup and shut down
+    if os.path.exists(os.path.join(r.pathCmpSystem, r.pathFileU)) is False:
         util.cleanup()
         dbg.catchError(5)
 
     # create INT files
     if r.bCreateINT is True:
         dbg.print_separatorBox('Creating INT file!')
-        os.chdir(r.pathSystem)
+        os.chdir(r.pathCmpSystem)
         subprocess.run(['ucc', 'dumpint', r.pathFileU])
 
     # create UZ2 files
     if r.bMakeRedirect is True:
         dbg.print_separatorBox('Creating UZ2 file!')
-        os.chdir(r.pathSystem)
+        os.chdir(r.pathCmpSystem)
         subprocess.run(['ucc', 'compress', r.pathFileU])
 
     # cleanup!
     util.cleanup()
 
 
-def handle_Files():
+def handle_Files() -> None:
     # announce
     dbg.print_separatorBox('MOVING FILES')
-
-    # get System dir
-    sys = util.getSysDir(r.dir_Compile)
-    # get file paths
-    dir_uFile   = util.getModFileTypes(sys, 1)
-    dir_uclFile = util.getModFileTypes(sys, 2)
-    dir_uz2file = util.getModFileTypes(sys, 3)
-    dir_intFile = util.getModFileTypes(sys, 4)
 
     # do we want files being moved to desired client / server directory?
     if r.bMoveFiles is True:
         print('>>> Moving files to CLIENT directory.\n')
-        dest = util.getSysDir(r.dir_MoveTo)
-        util.copyFile4System(dir_uFile,   dest)
-        util.copyFile4System(dir_uclFile, dest)
-        util.copyFile4System(dir_intFile, dest)
+        dest: str = util.getSysDir(r.dir_MoveTo)
+        util.copyFile4System(r.pathFileU,   dest)
+        util.copyFile4System(r.pathFileUCL, dest)
+        util.copyFile4System(r.pathFileINT, dest)
 
     if r.bMakeRelease is True:
         print('>>> Moving files to output directory.\n')
-        x = os.path.join(r.dir_ReleaseOutput, r.mutatorName)
+        x: str = os.path.join(r.dir_ReleaseOutput, r.mutatorName)
         # if 'Redirect' folder doesn't exist, create it
         if not os.path.exists(x):
             os.makedirs(x)
         # copy files
-        util.copyFile4System(dir_uFile,   x)
-        util.copyFile4System(dir_uclFile, x)
+        util.copyFile4System(r.pathFileU,   x)
+        util.copyFile4System(r.pathFileUCL, x)
 
         if r.bMakeRedirect is True:
-            y = os.path.join(x, _redirectFolderName)
+            y = os.path.join(x, REDIRECT_DIR_NAME)
             if not os.path.exists(y):
                 os.makedirs(y)
             # copy files
-            util.copyFile4System(dir_uz2file, y)
+            util.copyFile4System(r.pathFileUZ2, y)
 
     # remove the file from system after everything else is done
     if r.bMakeRedirect is True:
         print('\n>>> Moving redirect file to redirect directory.\n')
-        util.copyFile4System(dir_uz2file, r.dir_Compile + '/' + _redirectFolderName)
-        util.deleteCompileDirFiles(dir_uz2file)
+        util.copyFile4System(r.pathFileUZ2, r.dir_Compile + '/' + REDIRECT_DIR_NAME)
+        util.deleteCompileDirFiles(r.pathFileUZ2)
 
     print('\n')
     # press any key to close
