@@ -8,6 +8,7 @@
 #################################################################################
 import os, shutil, sys, subprocess, stat
 from configparser import ConfigParser
+from pathlib import Path
 
 #################################################################################
 #                              'CONSTANTS'
@@ -142,7 +143,7 @@ class utility():
 
     def dir_remove(self, dir: str) -> None:
         """remove new created 'classes' folder on alternate dir style"""
-        if os.path.exists(dir):
+        if Path(dir).exists():
             shutil.rmtree(dir, onerror=self.remove_readonly)
 
     def deleteCompileDirFiles(self, file: str) -> None:
@@ -164,7 +165,7 @@ class utility():
         """Get / create redirect directory in selected directory"""
         destdir = os.path.join(dir, REDIRECT_DIR_NAME)
         # check if path exist and create otherwise
-        if not os.path.exists(destdir):
+        if not Path(destdir).exists():
             os.makedirs(destdir)
         return destdir
 
@@ -363,7 +364,7 @@ def compileMe() -> None:
     # if we use alternative directory style, we need to do some work
     if r.bAltDirectories is True:
         sources: str = os.path.join(srcdir, 'sources')
-        if os.path.exists(sources) is False:
+        if Path(sources).exists() is False:
             dbg.catchError(4)
 
         classes: str = os.path.join(destdir, 'Classes')
@@ -387,7 +388,7 @@ def compileMe() -> None:
 
     # let's just check if package.u is created or not
     # else we failed -> cleanup and shut down
-    if os.path.exists(os.path.join(r.pathCmpSystem, r.pathFileU)) is False:
+    if Path(os.path.join(r.pathCmpSystem, r.pathFileU)).exists() is False:
         util.cleanup()
         dbg.catchError(5)
 
@@ -423,7 +424,7 @@ def handle_Files() -> None:
         print('>>> Moving files to output directory.\n')
         x: str = os.path.join(r.dir_ReleaseOutput, r.mutatorName)
         # if 'Redirect' folder doesn't exist, create it
-        if not os.path.exists(x):
+        if not Path(x).exists():
             os.makedirs(x)
         # copy files
         util.copyFile4System(r.pathFileU,   x)
@@ -431,7 +432,7 @@ def handle_Files() -> None:
 
         if r.bMakeRedirect is True:
             y = os.path.join(x, REDIRECT_DIR_NAME)
-            if not os.path.exists(y):
+            if not Path(y).exists():
                 os.makedirs(y)
             # copy files
             util.copyFile4System(r.pathFileUZ2, y)
