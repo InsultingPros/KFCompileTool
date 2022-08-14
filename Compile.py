@@ -148,7 +148,7 @@ class utility():
 
     def deleteCompileDirFiles(self, file: str) -> None:
         """Check and delete the file"""
-        if os.path.isfile(os.path.join(r.pathCmpSystem, file)):
+        if Path(os.path.join(r.pathCmpSystem, file)).is_file():
             os.remove(os.path.join(r.pathCmpSystem, file))
 
     def getSysDir(self, basedir: str) -> str:
@@ -156,7 +156,7 @@ class utility():
         return os.path.join(basedir, 'System')
 
     def copyFile4System(self, src, dest) -> None:
-        if os.path.isfile(src) is False:
+        if not Path(src).is_file():
             return
         shutil.copy(src, dest)
         print('> Copied:  ' + src + '  --->  ' + dest)
@@ -296,7 +296,7 @@ def initSettings() -> None:
     dirScript: str = os.path.dirname(os.path.realpath(__file__))
     dirSettingsIni: str = os.path.join(dirScript, SETTINGS_FILE)
     # check if settings.ini exists in same directory
-    if os.path.isfile(dirSettingsIni) is False:
+    if not Path(dirSettingsIni).is_file():
         cfghlp.create_settingsFile(dirSettingsIni)
         dbg.catchError(0)
 
@@ -380,7 +380,7 @@ def compileMe() -> None:
 
     ucc: str = os.path.join(r.pathCmpSystem, 'UCC.exe')
     # check if we have UCC
-    if os.path.isfile(ucc) is False:
+    if not Path(ucc).is_file():
         dbg.catchError(3)
 
     # start the actual compilation! FINALLY!!!
