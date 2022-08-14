@@ -149,7 +149,7 @@ class utility():
     def deleteCompileDirFiles(self, file: str) -> None:
         """Check and delete the file"""
         if Path(os.path.join(r.pathCmpSystem, file)).is_file():
-            os.remove(os.path.join(r.pathCmpSystem, file))
+            Path(os.path.join(r.pathCmpSystem, file)).unlink()
 
     def getSysDir(self, basedir: str) -> str:
         """Get system directory"""
