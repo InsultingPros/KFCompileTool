@@ -190,7 +190,7 @@ class configHelper(utility, types):
         """Create DEFAULT config file if none found"""
         # print(sys_dir)
         # make sure we don't have old files
-        os.path.join(os.getcwd(), CMPL_CONFIG)
+        os.path.join(os.path.dirname(os.path.realpath(__file__)), CMPL_CONFIG)
 
         def wStrToConfig(text: str) -> None:
             """Write single line to file"""
