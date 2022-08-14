@@ -109,28 +109,30 @@ class utility():
             self.dir_remove(os.path.join(r.dir_Compile, r.mutatorName))
 
     def getModFileTypes(self, dir: str, type: int) -> str:
-        """Get file paths from type"""
+        """Get file paths from type."""
         ext: str
-        if type == 1:
-            ext = '.u'
-        elif type == 2:
-            ext = '.ucl'
-        elif type == 3:
-            ext = '.u.uz2'
-        elif type == 4:
-            ext = '.int'
+        match type:
+            case 1:
+                ext = '.u'
+            case 2:
+                ext = '.ucl'
+            case 3:
+                ext = '.u.uz2'
+            case 4:
+                ext = '.int'
         return os.path.join(dir, r.mutatorName + ext)
 
     def getModFileName(self, type: int) -> str:
         """get file names from type"""
-        if type == 1:
-            return r.mutatorName + '.u'
-        elif type == 2:
-            return r.mutatorName + '.ucl'
-        elif type == 3:
-            return r.mutatorName + '.u.uz2'
-        else:
-            return 'fallback name + extension!'
+        match type:
+            case 1:
+                return r.mutatorName + '.u'
+            case 2:
+                return r.mutatorName + '.ucl'
+            case 3:
+                return r.mutatorName + '.u.uz2'
+            case _:
+                return 'fallback name + extension!'
 
     # https://docs.python.org/3/library/shutil.html#rmtree-example
     def remove_readonly(self, func, path, _) -> None:
@@ -238,19 +240,22 @@ class Debug():
     # stop right here
     def catchError(self, err: int):
         prefix :str = '>>> TERMINATION WARNING: '
-        if err == 0:
-            print(prefix + 'CompileSettings.ini was not found.')
-        elif err == 1:
-            print(prefix + 'Global section not found in CompileSettings.ini.')
-        elif err == 2:
-            print(prefix + r.mutatorName + ' section not found in CompileSettings.ini')
-        elif err == 3:
-            print(prefix + 'UCC.exe was not found in compile directory. Install SDK and retry!')
-        elif err == 4:
-            print(prefix + 'Alternative Directory is True, but `sources` folder NOT FOUND!')
-        elif err == 5:
-            print(prefix + 'Compilation FAILED!')
-        os.system('pause')
+        match err:
+            case 0:
+                print(prefix + 'CompileSettings.ini was not found.')
+            case 1:
+                print(prefix + 'Global section not found in CompileSettings.ini.')
+            case 2:
+                print(prefix + r.mutatorName + ' section not found in CompileSettings.ini')
+            case 3:
+                print(prefix + 'UCC.exe was not found in compile directory. Install SDK and retry!')
+            case 4:
+                print(prefix + 'Alternative Directory is True, but `sources` folder NOT FOUND!')
+            case 5:
+                print(prefix + 'Compilation FAILED!')
+            case _:
+                print(prefix + 'undefined error code!')
+        input('Press any key to continue.')
         exit()
 
     def print_separatorBox(self, msg: str) -> None:
@@ -437,9 +442,8 @@ def handle_Files() -> None:
         util.copyFile4System(r.pathFileUZ2, r.dir_Compile + '/' + REDIRECT_DIR_NAME)
         util.deleteCompileDirFiles(r.pathFileUZ2)
 
-    print('\n')
-    # press any key to close
-    os.system('pause')
+    # exit the script, everything is done
+    input('\n' + 'Press any key to continue.')
 
 
 #################################################################################
