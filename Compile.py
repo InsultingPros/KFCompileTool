@@ -166,7 +166,7 @@ class utility():
         destdir = os.path.join(dir, REDIRECT_DIR_NAME)
         # check if path exist and create otherwise
         if not Path(destdir).exists():
-            os.makedirs(destdir)
+            Path(destdir).mkdir()
         return destdir
 
 
@@ -369,7 +369,7 @@ def compileMe() -> None:
 
         classes: str = os.path.join(destdir, 'Classes')
         util.dir_remove(classes)
-        os.makedirs(classes)
+        Path(classes).mkdir()
         # now copy everything!
         for path, subdirs, files in os.walk(sources):
             for name in files:
@@ -425,7 +425,7 @@ def handle_Files() -> None:
         x: str = os.path.join(r.dir_ReleaseOutput, r.mutatorName)
         # if 'Redirect' folder doesn't exist, create it
         if not Path(x).exists():
-            os.makedirs(x)
+            Path(x).mkdir()
         # copy files
         util.copyFile4System(r.pathFileU,   x)
         util.copyFile4System(r.pathFileUCL, x)
@@ -433,7 +433,7 @@ def handle_Files() -> None:
         if r.bMakeRedirect is True:
             y = os.path.join(x, REDIRECT_DIR_NAME)
             if not Path(y).exists():
-                os.makedirs(y)
+                Path(y).mkdir()
             # copy files
             util.copyFile4System(r.pathFileUZ2, y)
 
