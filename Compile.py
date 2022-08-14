@@ -1,5 +1,6 @@
 # Python version of my shit bat file
 # check updates: https://github.com/InsultingPros/KFCompileTool
+# linted by http://mypy-lang.org/
 
 
 #################################################################################
@@ -13,17 +14,21 @@ from configparser import ConfigParser
 #################################################################################
 LINE_SEPARATOR:    str       = '######################################################'
 SETTINGS_FILE:     str       = 'CompileSettings.ini'
+"""Settings file for this script, contains client-server directories and mods info"""
 CMPL_CONFIG:       str       = 'kfcompile.ini'
+"""Game config that UCC.exe uses for compilation, contains EditPackages lines and the most minimal setup"""
 REDIRECT_DIR_NAME: str       = 'Redirect'
+"""Folder name for redirect files"""
 DEBUG:             bool      = True
 IGNORE_LIST:       list[str] = ['.git','*.md','Docs', 'LICENSE']
+"""Filter for files-directories, so we copy-paste only source files"""
 
 #################################################################################
 #                                UTILITY
 #################################################################################
 
-# contains 'runtime' variables
 class runtimeVars():
+    """Сontains 'runtime' variables"""
     # Global
     mutatorName:            str  =   'fallback mutatorName'
     dir_Compile:            str  =   'fallback dir_Compile'
@@ -49,8 +54,8 @@ class runtimeVars():
     pathMoveTo:             str  =   'fallback pathMoveTo'
 
 
-# contains lists, dicts used to populate kfcompile.ini / CompileSettings.ini
 class types():
+    """Contains lists, dicts used to populate kfcompile.ini / CompileSettings.ini"""
     # CompileSettings.ini
     def_Global: dict[str, str] = {'mutatorName'          :   'TestMut',
                                   'dir_Compile'          :   r'D:\Games\SteamLibrary\steamapps\common\KillingFloor',
@@ -90,8 +95,8 @@ class types():
     def_Suppress: list[str] = ['DevLoad', 'DevSave']
 
 
-# random utility functions
 class utility():
+    """Random utility functions"""
     # post compilation / failure cleanup
     def cleanup(self) -> None:
         # remove steamapp_id.txt, its being created every time
@@ -103,8 +108,8 @@ class utility():
         if r.bICompileOutsideofKF is True:
             self.dir_remove(os.path.join(r.dir_Compile, r.mutatorName))
 
-    # get file paths from type
     def getModFileTypes(self, dir: str, type: int) -> str:
+        """Get file paths from type"""
         ext: str
         if type == 1:
             ext = '.u'
@@ -116,8 +121,8 @@ class utility():
             ext = '.int'
         return os.path.join(dir, r.mutatorName + ext)
 
-    # get file names from type
     def getModFileName(self, type: int) -> str:
+        """get file names from type"""
         if type == 1:
             return r.mutatorName + '.u'
         elif type == 2:
@@ -129,22 +134,22 @@ class utility():
 
     # https://docs.python.org/3/library/shutil.html#rmtree-example
     def remove_readonly(self, func, path, _) -> None:
-        # Clear the readonly bit and reattempt the removal
+        """Clear the readonly bit and reattempt the removal"""
         os.chmod(path, stat.S_IWRITE)
         func(path)
 
-    # remove new created 'classes' folder on alternate dir style
     def dir_remove(self, dir: str) -> None:
+        """remove new created 'classes' folder on alternate dir style"""
         if os.path.exists(dir):
             shutil.rmtree(dir, onerror=self.remove_readonly)
 
-    # check and delete the file
     def deleteCompileDirFiles(self, file: str) -> None:
+        """Check and delete the file"""
         if os.path.isfile(os.path.join(r.pathCmpSystem, file)):
             os.remove(os.path.join(r.pathCmpSystem, file))
 
-    # get system directory
     def getSysDir(self, basedir: str) -> str:
+        """Get system directory"""
         return os.path.join(basedir, 'System')
 
     def copyFile4System(self, src, dest) -> None:
@@ -153,8 +158,8 @@ class utility():
         shutil.copy(src, dest)
         print('> Copied:  ' + src + '  --->  ' + dest)
 
-    # get / create redirect directory in selected directory
     def get_dirRedirect(self, dir: str) -> str:
+        """Get / create redirect directory in selected directory"""
         destdir = os.path.join(dir, REDIRECT_DIR_NAME)
         # check if path exist and create otherwise
         if not os.path.exists(destdir):
@@ -162,10 +167,11 @@ class utility():
         return destdir
 
 
-# class for working with config file
 class configHelper(utility, types):
-    # create DEFAULT config file if none found
+    """Class for working with config file"""
+
     def create_settingsFile(self, dir):
+        """Create DEFAULT config file if none found"""
         config = ConfigParser()
         # save the case
         config.optionxform = str
@@ -178,25 +184,25 @@ class configHelper(utility, types):
 
         print('>>> WARING: ' + SETTINGS_FILE + ' was created in same directory. PLEASE go and edit it to fit your neeeds.')
 
-    # create DEFAULT config file if none found
     def create_defMincompfile(self, sys_dir) -> None:
+        """Create DEFAULT config file if none found"""
         # print(sys_dir)
         # make sure we don't have old files
         os.path.join(os.getcwd(), CMPL_CONFIG)
 
-        # write single line
         def wStrToConfig(text: str) -> None:
+            """Write single line to file"""
             with open(CMPL_CONFIG, 'a') as f:
                 f.writelines([text + '\n'])
 
-        # add lines at the end of the file
         def wListToConfig(key: str, list: list[str]) -> None:
+            """Add lines at the end of the file"""
             with open(CMPL_CONFIG, 'a') as f:
                 for x in list:
                     f.writelines([key + '=' + x + '\n'])
 
-        # write key-value from dictionary
         def wDictToConfig(dict: dict[str, str]) -> None:
+            """write key-value from dictionary"""
             with open(CMPL_CONFIG, 'a') as f:
                 for k, v in dict.items():
                     f.writelines([k + '=' + v + '\n'])
@@ -247,8 +253,8 @@ class Debug():
         os.system('pause')
         exit()
 
-    # nice message box
     def print_separatorBox(self, msg: str) -> None:
+        """Print nice message box"""
         print('\n' + LINE_SEPARATOR + '\n')
         print(msg)
         print('\n' + LINE_SEPARATOR + '\n')
@@ -278,8 +284,8 @@ class Debug():
 #                                FUNCTIONS
 #################################################################################
 
-# read config file and define all variables
 def initSettings() -> None:
+    """Read config file and define all variables."""
     # self directory
     dirScript: str = os.path.dirname(os.path.realpath(__file__))
     dirSettingsIni: str = os.path.join(dirScript, SETTINGS_FILE)

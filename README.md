@@ -44,6 +44,6 @@ If you feel lost after this description - check the [`CompileSettings.ini`] (it'
 
 ## Requirements
 
-- Script was made by [Python 3.10.2](https://docs.python.org/release/3.10.2/) and linted with [MyPy](http://mypy-lang.org/).
-- Windows OS. I didn't test this on Linux / MacOS.
+- [Python 3.10.x](https://www.python.org/downloads/).
+- OS - Windows. I didn't test this on Linux, MacOS.
 - KF 1 SDK / UCC.exe. Obviously.
