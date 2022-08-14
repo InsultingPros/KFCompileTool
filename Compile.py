@@ -238,8 +238,8 @@ class configHelper(utility, types):
 
 
 class Debug():
-    # stop right here
-    def catchError(self, err: int):
+    def throwError(self, err: int):
+        """Throw human readable error message."""
         prefix :str = '>>> TERMINATION WARNING: '
         match err:
             case 0:
@@ -298,13 +298,13 @@ def initSettings() -> None:
     # check if settings.ini exists in same directory
     if not Path(dirSettingsIni).is_file():
         cfghlp.create_settingsFile(dirSettingsIni)
-        dbg.catchError(0)
+        dbg.throwError(0)
 
     config = ConfigParser()
     config.read(dirSettingsIni)
     # get global section and set main vars
     if config.has_section('Global') is False:
-        dbg.catchError(1)
+        dbg.throwError(1)
 
     # GLOBAL
     # accept cmdline arguments
@@ -321,7 +321,7 @@ def initSettings() -> None:
     # SECTIONS
     # check if exist
     if config.has_section(r.mutatorName) is False:
-        dbg.catchError(2)
+        dbg.throwError(2)
 
     r.EditPackages          =   config[r.mutatorName]['EditPackages']
     r.bICompileOutsideofKF  =   config[r.mutatorName].getboolean('bICompileOutsideofKF')
@@ -365,7 +365,7 @@ def compileMe() -> None:
     if r.bAltDirectories is True:
         sources: str = os.path.join(srcdir, 'sources')
         if Path(sources).exists() is False:
-            dbg.catchError(4)
+            dbg.throwError(4)
 
         classes: str = os.path.join(destdir, 'Classes')
         util.dir_remove(classes)
@@ -381,7 +381,7 @@ def compileMe() -> None:
     ucc: str = os.path.join(r.pathCmpSystem, 'UCC.exe')
     # check if we have UCC
     if not Path(ucc).is_file():
-        dbg.catchError(3)
+        dbg.throwError(3)
 
     # start the actual compilation! FINALLY!!!
     subprocess.run([ucc, 'make', 'ini=' + CMPL_CONFIG, '-EXPORTCACHE'])
@@ -390,7 +390,7 @@ def compileMe() -> None:
     # else we failed -> cleanup and shut down
     if Path(os.path.join(r.pathCmpSystem, r.pathFileU)).exists() is False:
         util.cleanup()
-        dbg.catchError(5)
+        dbg.throwError(5)
 
     # create INT files
     if r.bCreateINT is True:
