@@ -6,7 +6,7 @@
 #################################################################################
 #                               IMPORTING
 #################################################################################
-import os, shutil, sys, subprocess, stat
+import os, shutil, sys, subprocess
 from configparser import ConfigParser
 from pathlib import Path
 
@@ -138,7 +138,7 @@ class utility():
     # https://docs.python.org/3/library/shutil.html#rmtree-example
     def remove_readonly(self, func, path, _) -> None:
         """Clear the readonly bit and reattempt the removal"""
-        os.chmod(path, stat.S_IWRITE)
+        Path(path).chmod(0o0200)
         func(path)
 
     def dir_remove(self, dir: str) -> None:
