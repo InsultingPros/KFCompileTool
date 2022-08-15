@@ -184,8 +184,6 @@ class configHelper(utility, types):
         with open(dir, 'w') as configfile:
             config.write(configfile, space_around_delimiters=False)
 
-        print('>>> WARING: ' + SETTINGS_FILE + ' was created in same directory. PLEASE go and edit it to fit your neeeds.')
-
     def create_defMincompfile(self, sys_dir) -> None:
         """Create DEFAULT config file if none found"""
         # print(sys_dir)
@@ -242,7 +240,8 @@ class Debug():
         prefix :str = '>>> TERMINATION WARNING: '
         match err:
             case 0:
-                print(prefix + 'CompileSettings.ini was not found.')
+                print(prefix + SETTINGS_FILE + ' was not found. We created a new file for you, in the same directory.')
+                print('>>> PLEASE go and edit it to fit your neeeds.')
             case 1:
                 print(prefix + 'Global section not found in CompileSettings.ini.')
             case 2:
