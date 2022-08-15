@@ -20,7 +20,6 @@ CMPL_CONFIG:       str       = 'kfcompile.ini'
 """Game config that UCC.exe uses for compilation, contains EditPackages lines and the most minimal setup"""
 REDIRECT_DIR_NAME: str       = 'Redirect'
 """Folder name for redirect files"""
-DEBUG:             bool      = True
 IGNORE_LIST:       list[str] = ['.git','*.md','Docs', 'LICENSE']
 """Filter for files-directories, so we copy-paste only source files"""
 
@@ -106,7 +105,7 @@ class utility():
          # remove compfile, we don't need it
         util.deleteCompileDirFiles(CMPL_CONFIG)
 
-        if r.bICompileOutsideofKF is True:
+        if r.bICompileOutsideofKF:
             self.dir_remove(os.path.join(r.dir_Compile, r.mutatorName))
 
     def getModFileTypes(self, dir: str, type: int) -> str:
@@ -265,26 +264,24 @@ class Debug():
         print(msg)
         print('\n' + LINE_SEPARATOR + '\n')
 
-    # DEBUG / info
-    def debug_Logs(self) -> None:
-        if DEBUG is True:
-            # type some information
-            print(LINE_SEPARATOR + '\n')
-            print(SETTINGS_FILE)
-            #  global
-            print('mutatorName          :', r.mutatorName)
-            print('dir_Compile          :', r.dir_Compile)
-            print('dir_MoveTo           :', r.dir_MoveTo)
-            print('dir_ReleaseOutput    :', r.dir_ReleaseOutput)
-            print('dir_Classes          :', r.dir_Classes, '\n')
-            # sections
-            print('EditPackages         :', r.EditPackages)
-            print('bICompileOutsideofKF :', r.bICompileOutsideofKF)
-            print('bAltDirectories      :', r.bAltDirectories)
-            print('bMoveFiles           :', r.bMoveFiles)
-            print('bCreateINT           :', r.bCreateINT)
-            print('bMakeRedirect        :', r.bMakeRedirect)
-            print('bMakeRelease         :', r.bMakeRelease)
+    def printSettings(self) -> None:
+        """Print Settings file contents."""
+        print(LINE_SEPARATOR + '\n')
+        print(SETTINGS_FILE + '\n')
+        #  global
+        print('mutatorName          :', r.mutatorName)
+        print('dir_Compile          :', r.dir_Compile)
+        print('dir_MoveTo           :', r.dir_MoveTo)
+        print('dir_ReleaseOutput    :', r.dir_ReleaseOutput)
+        print('dir_Classes          :', r.dir_Classes, '\n')
+        # sections
+        print('EditPackages         :', r.EditPackages)
+        print('bICompileOutsideofKF :', r.bICompileOutsideofKF)
+        print('bAltDirectories      :', r.bAltDirectories)
+        print('bMoveFiles           :', r.bMoveFiles)
+        print('bCreateINT           :', r.bCreateINT)
+        print('bMakeRedirect        :', r.bMakeRedirect)
+        print('bMakeRelease         :', r.bMakeRelease)
 
 #################################################################################
 #                                FUNCTIONS
@@ -303,7 +300,7 @@ def initSettings() -> None:
     config = ConfigParser()
     config.read(dirSettingsIni)
     # get global section and set main vars
-    if config.has_section('Global') is False:
+    if not config.has_section('Global'):
         dbg.throwError(1)
 
     # GLOBAL
@@ -320,7 +317,7 @@ def initSettings() -> None:
 
     # SECTIONS
     # check if exist
-    if config.has_section(r.mutatorName) is False:
+    if not config.has_section(r.mutatorName):
         dbg.throwError(2)
 
     r.EditPackages          =   config[r.mutatorName]['EditPackages']
@@ -357,14 +354,14 @@ def compileMe() -> None:
     # if our mod files are in other directory, just copy-paste everything from there
 
     # if mod folder is outside, delete old dir and copy-paste new one
-    if r.bICompileOutsideofKF is True:
+    if r.bICompileOutsideofKF:
         util.dir_remove(destdir)
         shutil.copytree(srcdir, destdir, copy_function=shutil.copy, ignore=shutil.ignore_patterns(*IGNORE_LIST))
 
     # if we use alternative directory style, we need to do some work
-    if r.bAltDirectories is True:
+    if r.bAltDirectories:
         sources: str = os.path.join(srcdir, 'sources')
-        if Path(sources).exists() is False:
+        if not Path(sources).exists():
             dbg.throwError(4)
 
         classes: str = os.path.join(destdir, 'Classes')
@@ -388,18 +385,18 @@ def compileMe() -> None:
 
     # let's just check if package.u is created or not
     # else we failed -> cleanup and shut down
-    if Path(os.path.join(r.pathCmpSystem, r.pathFileU)).exists() is False:
+    if not Path(os.path.join(r.pathCmpSystem, r.pathFileU)).exists():
         util.cleanup()
         dbg.throwError(5)
 
     # create INT files
-    if r.bCreateINT is True:
+    if r.bCreateINT:
         dbg.print_separatorBox('Creating INT file!')
         os.chdir(r.pathCmpSystem)
         subprocess.run(['ucc', 'dumpint', r.pathFileU])
 
     # create UZ2 files
-    if r.bMakeRedirect is True:
+    if r.bMakeRedirect:
         dbg.print_separatorBox('Creating UZ2 file!')
         os.chdir(r.pathCmpSystem)
         subprocess.run(['ucc', 'compress', r.pathFileU])
@@ -413,14 +410,14 @@ def handle_Files() -> None:
     dbg.print_separatorBox('MOVING FILES')
 
     # do we want files being moved to desired client / server directory?
-    if r.bMoveFiles is True:
+    if r.bMoveFiles:
         print('>>> Moving files to CLIENT directory.\n')
         dest: str = util.getSysDir(r.dir_MoveTo)
         util.copyFile4System(r.pathFileU,   dest)
         util.copyFile4System(r.pathFileUCL, dest)
         util.copyFile4System(r.pathFileINT, dest)
 
-    if r.bMakeRelease is True:
+    if r.bMakeRelease:
         print('>>> Moving files to output directory.\n')
         x: str = os.path.join(r.dir_ReleaseOutput, r.mutatorName)
         # if 'Redirect' folder doesn't exist, create it
@@ -430,7 +427,7 @@ def handle_Files() -> None:
         util.copyFile4System(r.pathFileU,   x)
         util.copyFile4System(r.pathFileUCL, x)
 
-        if r.bMakeRedirect is True:
+        if r.bMakeRedirect:
             y = os.path.join(x, REDIRECT_DIR_NAME)
             if not Path(y).exists():
                 Path(y).mkdir()
@@ -438,7 +435,7 @@ def handle_Files() -> None:
             util.copyFile4System(r.pathFileUZ2, y)
 
     # remove the file from system after everything else is done
-    if r.bMakeRedirect is True:
+    if r.bMakeRedirect:
         print('\n>>> Moving redirect file to redirect directory.\n')
         util.copyFile4System(r.pathFileUZ2, r.dir_Compile + '/' + REDIRECT_DIR_NAME)
         util.deleteCompileDirFiles(r.pathFileUZ2)
@@ -460,7 +457,7 @@ r = runtimeVars()
 # then assign global vars
 initSettings()
 # useful logs, if you want em
-dbg.debug_Logs()
+dbg.printSettings()
 # compile!
 compileMe()
 handle_Files()
