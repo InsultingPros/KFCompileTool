@@ -1,0 +1,17 @@
+[workspace]
+members = ["crates//kf_compile_tool", "crates//kfct_lib", "crates//tests"]
+resolver = "2"
+
+[workspace.dependencies]
+thiserror = "2.0.*"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+panic = "abort"
+strip = true
