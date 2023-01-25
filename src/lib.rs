@@ -1,0 +1,217 @@
+use crate::config_manager::kf_config::COMPILATION_CONFIG_NAME;
+use crate::config_manager::steam_appid::STEAM_APPID_TXT;
+use config_manager::app_config::{GlobalSection, ModSection};
+use kfuz2_lib::errors::UZ2LibErrors;
+use std::{
+    path::{PathBuf, StripPrefixError},
+    rc::Rc,
+};
+
+pub mod cli;
+pub mod config_manager;
+pub mod post_pass;
+pub mod pre_pass;
+pub mod release_manager;
+pub mod ucc_wrapper;
+pub mod utility;
+
+/// KF1 file extensions.
+pub const UNREAL_PACKAGES: [&str; 4] = [".u", ".ucl", ".u.uz2", ".int"];
+/// Filter for files-directories, so we copy-paste only source files.
+pub const IGNORE_LIST: [&str; 4] = [".git", "*.md", "Docs", "LICENSE"];
+/// Alternative folder name, instead of `Classes`. Used to organize source files in a better way.
+pub const ALT_SOURCE_DIR_NAME: &str = "sources";
+
+#[derive(thiserror::Error, Debug)]
+pub enum CompileToolErrors {
+    // #[error("Some IO error?")]
+    #[error(transparent)]
+    IOError(#[from] std::io::Error),
+    #[error(transparent)]
+    WriteError(#[from] std::fmt::Error),
+    #[error("{0}")]
+    StringErrors(String),
+    #[error(transparent)]
+    ZipErrors(#[from] zip::result::ZipError),
+    #[error(transparent)]
+    WalkDirErrors(#[from] walkdir::Error),
+    #[error(transparent)]
+    PathErrors(#[from] StripPrefixError),
+    #[error(transparent)]
+    Uz2LibErrors(#[from] UZ2LibErrors),
+}
+
+#[derive(Debug, Default)]
+/// some stupid superstruct for all important variables
+pub struct RuntimeVariables {
+    pub compile_options: CompileOptions,
+    pub compiled_paths: CompilationPaths,
+    pub path_where_to_copy: Option<PathBuf>,
+    pub release_options: Option<ReleaseOptions>,
+}
+
+impl RuntimeVariables {
+    fn new(global_section: &GlobalSection, local_section: &ModSection) -> Self {
+        Self {
+            compile_options: CompileOptions::new(global_section, local_section),
+            compiled_paths: CompilationPaths::new(global_section),
+            path_where_to_copy: global_section.dir_copy_to.clone().map(PathBuf::from),
+            release_options: ReleaseOptions::new(global_section),
+        }
+    }
+}
+
+#[allow(clippy::struct_excessive_bools)]
+#[derive(Debug, Default)]
+pub struct CompileOptions {
+    /// Mod package name.
+    pub package_name: String,
+    /// Mod's `EditPackages`.
+    pub edit_packages: Rc<Vec<String>>,
+    /// Create localization file.
+    pub create_int: bool,
+    /// Source files are somewhere else.
+    pub sources_are_somewhere_else: bool,
+    /// Where do our source files actually lay.
+    pub path_source_files: PathBuf,
+    /// Use alternative source file organization.
+    pub alt_directories: bool,
+    /// Copy default config or no?
+    pub copy_default_ini: bool,
+    /// _
+    pub make_redirect: bool,
+}
+
+impl CompileOptions {
+    fn new(global_section: &GlobalSection, local_section: &ModSection) -> Self {
+        Self {
+            package_name: global_section.package_name.clone(),
+            edit_packages: Rc::new(
+                local_section
+                    .edit_packages
+                    .split(',')
+                    .map(std::string::ToString::to_string)
+                    .collect(),
+            ),
+            create_int: local_section.create_int,
+            sources_are_somewhere_else: local_section.compile_outsideof_kf,
+            path_source_files: PathBuf::from(&global_section.dir_source_files)
+                .join(global_section.package_name.clone()),
+            alt_directories: local_section.alt_directories,
+            copy_default_ini: true,
+            make_redirect: local_section.make_redirect,
+        }
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct ReleaseOptions {
+    pub make_zip: bool,
+    pub zip_name: String,
+    /// _
+    pub path_root: PathBuf,
+    /// output folder for this exact mod: "C:\\Users\\Pepe User\\Desktop\\Mutators\\`MY_MOD`"
+    pub path_mod: PathBuf,
+    /// "C:\\Users\\Pepe User\\Desktop\\Mutators\\`MY_MOD`\\System"
+    pub path_system: PathBuf,
+    /// "C:\\Users\\Pepe User\\Desktop\\Mutators\\`MY_MOD`\\Redirect"
+    pub path_redirect: PathBuf,
+}
+
+impl ReleaseOptions {
+    fn new(global_section: &GlobalSection) -> Option<Self> {
+        global_section
+            .dir_release_output
+            .as_ref()
+            .map(|output| Self {
+                make_zip: true,
+                zip_name: format!("{}.zip", &global_section.package_name),
+                path_root: PathBuf::from(output),
+                path_mod: PathBuf::from(output).join(&global_section.package_name),
+                path_system: PathBuf::from(output)
+                    .join(&global_section.package_name)
+                    .join("System"),
+                path_redirect: PathBuf::from(output)
+                    .join(&global_section.package_name)
+                    .join("Redirect"),
+            })
+    }
+}
+
+/// compiled files
+#[derive(Debug, Default)]
+pub struct CompilationPaths {
+    /// Compilation main directory. For example "D:\\Dedicated Server".
+    pub compile_dir: PathBuf,
+    /// Compilation `System` directory. For example "D:\\Dedicated Server\\System".
+    pub compile_dir_system: PathBuf,
+    /// Compilation `System` directory. For example "D:\\Dedicated Server\\Redirect".
+    pub compile_dir_redirect: PathBuf,
+    /// Source files directory in root.
+    pub compile_dir_sources: PathBuf,
+
+    /// Path to `UCC.exe`. For example "D:\\Dedicated Server\\System\\UCC.exe".
+    pub ucc_exe: Rc<PathBuf>,
+    /// Path to temporary kf.ini. For example "D:\\Dedicated Server\\System\\kfcompile.ini".
+    pub temp_kf_ini: PathBuf,
+    /// Path to hacked `steam_appid.txt`. For example "D:\\Dedicated Server\\System\\`steam_appid.txt`".
+    /// # Should be deleted after compilation attempt!
+    pub temp_steam_appid: Rc<PathBuf>,
+
+    /// Path to compiled binary file. For example "D:\\Dedicated Server\\System\\`PACKAGE_NAME`.u".
+    pub path_package_u: PathBuf,
+    /// Path to compiled `ucl` file. For example "D:\\Dedicated Server\\System\\`PACKAGE_NAME`.ucl".
+    pub path_package_ucl: PathBuf,
+    /// Path to compiled localization file. For example "D:\\Dedicated Server\\System\\`PACKAGE_NAME`.int".
+    pub path_package_int: PathBuf,
+    /// Path to compiled mod's redirect file. For example "D:\\Dedicated Server\\Redirect\\`PACKAGE_NAME`.uz2".
+    pub path_package_uz2: PathBuf,
+    /// Path to initially created redirect file ("D:\\Dedicated Server\\System\\`PACKAGE_NAME`.uz2"). Should be deleted or moved!
+    pub path_package_uz2_init: PathBuf,
+    /// Path to compiled mod's redirect file. For example "D:\\Dedicated Server\\System\\`PACKAGE_NAME`.ini".
+    pub path_package_ini: PathBuf,
+
+    // package names, for easier access
+    pub name_package_u: String,
+    pub name_package_ucl: String,
+    pub name_package_uz2: String,
+    pub name_package_ini: String,
+    pub name_package_int: String,
+
+    /// Path to directory from where we copy-paste source files.
+    /// "D:\\Mods\\`PACKAGE_NAME`"
+    pub sources_path: Option<PathBuf>,
+}
+
+impl CompilationPaths {
+    fn new(global_section: &GlobalSection) -> Self {
+        let compile_dir: PathBuf = PathBuf::from(global_section.dir_compiler.clone());
+        let package_name = &global_section.package_name;
+
+        Self {
+            compile_dir: compile_dir.clone(),
+            compile_dir_system: compile_dir.join("System"),
+            compile_dir_redirect: compile_dir.join("Redirect"),
+            compile_dir_sources: compile_dir.join(package_name),
+
+            ucc_exe: Rc::new(compile_dir.join("System").join("UCC.exe")),
+            sources_path: global_section.dir_copy_to.as_ref().map(PathBuf::from),
+
+            temp_kf_ini: compile_dir.join("System").join(COMPILATION_CONFIG_NAME),
+            temp_steam_appid: Rc::new(compile_dir.join(format!("System\\{STEAM_APPID_TXT}"))),
+
+            path_package_u: compile_dir.join(format!("System\\{package_name}.u")),
+            path_package_ucl: compile_dir.join(format!("System\\{package_name}.ucl")),
+            path_package_uz2: compile_dir.join(format!("Redirect\\{package_name}.u.uz2")),
+            path_package_uz2_init: compile_dir.join(format!("System\\{package_name}.u.uz2")),
+            path_package_int: compile_dir.join(format!("System\\{package_name}.int")),
+            path_package_ini: compile_dir.join(format!("System\\{package_name}.ini")),
+
+            name_package_u: format!("{package_name}.u"),
+            name_package_ucl: format!("{package_name}.ucl"),
+            name_package_uz2: format!("{package_name}.u.uz2"),
+            name_package_ini: format!("{package_name}.ini"),
+            name_package_int: format!("{package_name}.int"),
+        }
+    }
+}

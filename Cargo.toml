@@ -1,0 +1,26 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "kf_compile_tool"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+gumdrop = "0.8.*"
+thiserror = "2.*"
+zip = { version = "3", features = ["deflate-flate2"], default-features = false }
+flate2 = { version = "1.*", features = ["zlib-rs"], default-features = false }
+zip-extensions = "0.8.*"
+configparser = "3.*"
+walkdir = "2.*"
+kfuz2_lib = "1.6"
+
+[lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+panic = "abort"
+strip = true
