@@ -1,0 +1,19 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "tests"
+version = "1.0.0"
+edition = "2021"
+authors = ["Shtoyan"]
+
+[dev-dependencies]
+kf_compile_tool = { path = "./../kf_compile_tool" }
+serial_test = "2"
+# sha1_smol = "1"
+
+[[test]]
+name = "cli_tests"
+path = "cli_tests.rs"
+
+# [[test]]
+# name = "utility_tests"
+# path = "utility_tests.rs"
