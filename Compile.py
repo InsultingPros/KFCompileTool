@@ -202,7 +202,10 @@ class Utility:
     def delete_compile_dir_files(self, file: str) -> None:
         """Check and delete the file"""
         if Path(os.path.join(r.pathCmpSystem, file)).is_file():
-            Path(os.path.join(r.pathCmpSystem, file)).unlink()
+            try:
+                Path(os.path.join(r.pathCmpSystem, file)).unlink()
+            except PermissionError as e:
+                sys.exit("Failed to delete the file: " + str(e))
 
     def get_system_dir(self, dir_base: str) -> str:
         """Get system directory"""
@@ -483,37 +486,46 @@ def handle_files() -> None:
 
     # do we want files being moved to desired client / server directory?
     if r.bMoveFiles:
-        print(">>> Moving files to CLIENT directory.\n")
-        dir_destination: str = util.get_system_dir(r.dir_MoveTo)
-        util.copy_file(r.pathFileU, dir_destination)
-        util.copy_file(r.pathFileUCL, dir_destination)
-        util.copy_file(r.pathFileINT, dir_destination)
+        try:
+            print(">>> Moving files to CLIENT directory.\n")
+            dir_destination: str = util.get_system_dir(r.dir_MoveTo)
+            util.copy_file(r.pathFileU, dir_destination)
+            util.copy_file(r.pathFileUCL, dir_destination)
+            util.copy_file(r.pathFileINT, dir_destination)
+        except Exception as e:
+            print("Failed to move compiled files: " + str(e))
 
     if r.bMakeRelease:
-        print(">>> Moving files to output directory.\n")
-        x: str = os.path.join(r.dir_ReleaseOutput, r.mutatorName)
-        # if 'Redirect' folder doesn't exist, create it
-        if not Path(x).exists():
-            Path(x).mkdir()
-        # copy files
-        util.copy_file(r.pathFileU, x)
-        util.copy_file(r.pathFileUCL, x)
+        try:
+            print(">>> Moving files to output directory.\n")
+            x: str = os.path.join(r.dir_ReleaseOutput, r.mutatorName)
+            # if 'Redirect' folder doesn't exist, create it
+            if not Path(x).exists():
+                Path(x).mkdir()
+            # copy files
+            util.copy_file(r.pathFileU, x)
+            util.copy_file(r.pathFileUCL, x)
+        except Exception as e:
+            print("Failed to create a release file: " + str(e))
 
         if r.bMakeRedirect:
-            y = os.path.join(x, REDIRECT_DIR_NAME)
-            if not Path(y).exists():
-                Path(y).mkdir()
-            # copy files
-            util.copy_file(r.pathFileUZ2, y)
+            try:
+                y = os.path.join(x, REDIRECT_DIR_NAME)
+                if not Path(y).exists():
+                    Path(y).mkdir()
+                # copy files
+                util.copy_file(r.pathFileUZ2, y)
+            except Exception as e:
+                print("Failed to create a redirect file in release folder: " + str(e))
 
     # remove the file from system after everything else is done
     if r.bMakeRedirect:
-        print("\n>>> Moving redirect file to redirect directory.\n")
-        util.copy_file(r.pathFileUZ2, r.dir_Compile + "/" + REDIRECT_DIR_NAME)
-        util.delete_compile_dir_files(r.pathFileUZ2)
-
-    # exit the script, everything is done
-    input("\n" + "Press any key to continue.")
+        try:
+            print("\n>>> Moving redirect file to redirect directory.\n")
+            util.copy_file(r.pathFileUZ2, r.dir_Compile + "/" + REDIRECT_DIR_NAME)
+            util.delete_compile_dir_files(r.pathFileUZ2)
+        except Exception as e:
+            print("Failed to create a redirect file: " + str(e))
 
 
 #################################################################################
@@ -522,7 +534,6 @@ def handle_files() -> None:
 
 
 def main() -> None:
-
     global util
     global cfghlp
     global r
@@ -541,6 +552,9 @@ def main() -> None:
     # compile!
     compile_me()
     handle_files()
+
+    # exit the script, everything is done
+    input("\n" + "Press any key to continue.")
 
 
 if __name__ == "__main__":
