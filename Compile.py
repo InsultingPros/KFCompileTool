@@ -70,7 +70,7 @@ class Types:
         "dir_Compile": r"D:\Games\SteamLibrary\steamapps\common\KillingFloor",
         "dir_MoveTo": r"D:\Games\KF Dedicated Server",
         "dir_ReleaseOutput": r"C:\Users\USER\Desktop\Mutators",
-        "dir_Classes": r"C:\Users\Shtoyan\Desktop\Projects",
+        "dir_Classes": r"C:\Users\USER\Desktop\Projects",
     }
 
     def_Mod = {
@@ -300,19 +300,27 @@ class Debug:
                 print(
                     prefix
                     + SETTINGS_FILE
-                    + " was not found. We created a new file for you, in the same directory."
+                    + """ was not found. We created a new file for you, in the same directory.
+                    PLEASE go and edit it to fit your needs."""
                 )
-                print(">>> PLEASE go and edit it to fit your needs.")
             case 1:
-                print(prefix + "Global section not found in CompileSettings.ini.")
+                print(
+                    prefix
+                    + """Global section not found in CompileSettings.ini.
+                    PLEASE go and fill it manually"""
+                )
             case 2:
                 print(
-                    prefix + r.mutatorName + " section not found in CompileSettings.ini"
+                    prefix
+                    + r.mutatorName
+                    + """ section not found in CompileSettings.ini.
+                    PLEASE go and fill it manually"""
                 )
             case 3:
                 print(
                     prefix
-                    + "UCC.exe was not found in compile directory. Install SDK and retry!"
+                    + """UCC.exe was not found in compile directory.
+                    PLEASE Install SDK / check your directories in Global section."""
                 )
             case 4:
                 print(
@@ -323,6 +331,7 @@ class Debug:
                 print(prefix + "Compilation FAILED!")
             case _:
                 print(prefix + "undefined error code!")
+
         input("Press any key to continue.")
         exit()
 
