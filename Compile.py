@@ -13,6 +13,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from configparser import ConfigParser
+from enum import Enum
 from pathlib import Path
 
 #################################################################################
@@ -27,6 +28,16 @@ REDIRECT_DIR_NAME: str = "Redirect"
 """Folder name for redirect files"""
 IGNORE_LIST: list[str] = [".git", "*.md", "Docs", "LICENSE"]
 """Filter for files-directories, so we copy-paste only source files"""
+
+
+class ERROR(Enum):
+    NO_SETTINGS = 0
+    NO_GLOBAL_SECTION = 1
+    NO_LOCAL_SECTION = 2
+    NO_UCC = 3
+    WRONG_DIR_STYLE = 4
+    COMPILATION_FAILED = 5
+
 
 #################################################################################
 #                                UTILITY
@@ -315,42 +326,42 @@ def print_separator_box(msg: str) -> None:
     print(LINE_SEPARATOR, msg, LINE_SEPARATOR)
 
 
-def throw_error(err: int):
+def throw_error(err: ERROR):
     """Throw human-readable error message."""
     prefix: str = ">>> TERMINATION WARNING: "
     match err:
-        case 0:
+        case ERROR.NO_SETTINGS:
             print(
                 prefix
                 + SETTINGS_FILE
                 + """ was not found. We created a new file for you, in the same directory.
                     PLEASE go and edit it to fit your needs."""
             )
-        case 1:
+        case ERROR.NO_GLOBAL_SECTION:
             print(
                 prefix
                 + """Global section not found in CompileSettings.ini.
                     PLEASE go and fill it manually"""
             )
-        case 2:
+        case ERROR.NO_LOCAL_SECTION:
             print(
                 prefix
                 + r.mutatorName
                 + """ section not found in CompileSettings.ini.
                     PLEASE go and fill it manually"""
             )
-        case 3:
+        case ERROR.NO_UCC:
             print(
                 prefix
                 + """UCC.exe was not found in compile directory.
                     PLEASE Install SDK / check your directories in Global section."""
             )
-        case 4:
+        case ERROR.WRONG_DIR_STYLE:
             print(
                 prefix
                 + "Alternative Directory is True, but `sources` folder NOT FOUND!"
             )
-        case 5:
+        case ERROR.COMPILATION_FAILED:
             print(prefix + "Compilation FAILED!")
         case _:
             print(prefix + "undefined error code!")
@@ -372,13 +383,13 @@ def init_settings() -> None:
     # check if settings.ini exists in same directory
     if not Path(dir_settings_ini).is_file():
         cfghlp.create_settings_file(dir_settings_ini)
-        throw_error(0)
+        throw_error(ERROR.NO_SETTINGS)
 
     config = ConfigParser()
     config.read(dir_settings_ini)
     # get global section and set main vars
     if not config.has_section("Global"):
-        throw_error(1)
+        throw_error(ERROR.NO_GLOBAL_SECTION)
 
     # GLOBAL
     # accept cmdline arguments
@@ -395,7 +406,7 @@ def init_settings() -> None:
     # SECTIONS
     # check if exist
     if not config.has_section(r.mutatorName):
-        throw_error(2)
+        throw_error(ERROR.NO_LOCAL_SECTION)
 
     r.EditPackages = config[r.mutatorName]["EditPackages"]
     r.bICompileOutsideofKF = config[r.mutatorName].getboolean("bICompileOutsideofKF")
@@ -444,7 +455,7 @@ def compile_me() -> None:
     if r.bAltDirectories:
         sources: str = os.path.join(dir_source, "sources")
         if not Path(sources).exists():
-            throw_error(4)
+            throw_error(ERROR.WRONG_DIR_STYLE)
 
         classes: str = os.path.join(dir_destination, "Classes")
         util.dir_remove(classes)
@@ -460,7 +471,7 @@ def compile_me() -> None:
     ucc: str = os.path.join(r.pathCmpSystem, "UCC.exe")
     # check if we have UCC
     if not Path(ucc).is_file():
-        throw_error(3)
+        throw_error(ERROR.NO_UCC)
 
     # start the actual compilation! FINALLY!!!
     subprocess.run([ucc, "make", "ini=" + CMPL_CONFIG, "-EXPORTCACHE"])
@@ -469,7 +480,7 @@ def compile_me() -> None:
     # else we failed -> cleanup and shut down
     if not Path(os.path.join(r.pathCmpSystem, r.pathFileU)).exists():
         util.cleanup()
-        throw_error(5)
+        throw_error(ERROR.COMPILATION_FAILED)
 
     # create INT files
     if r.bCreateINT:
