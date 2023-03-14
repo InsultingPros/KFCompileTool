@@ -474,25 +474,30 @@ def compile_me() -> None:
         throw_error(ERROR.NO_UCC)
 
     # start the actual compilation! FINALLY!!!
-    subprocess.run([ucc, "make", "ini=" + CMPL_CONFIG, "-EXPORTCACHE"])
-
-    # let's just check if package.u is created or not
-    # else we failed -> cleanup and shut down
-    if not Path(os.path.join(r.pathCmpSystem, r.pathFileU)).exists():
+    try:
+        subprocess.run([ucc, "make", "ini=" + CMPL_CONFIG, "-EXPORTCACHE"], check=True)
+    except subprocess.CalledProcessError as e:
+        print(str(e))
         util.cleanup()
         throw_error(ERROR.COMPILATION_FAILED)
 
     # create INT files
     if r.bCreateINT:
-        print_separator_box("Creating INT file!")
-        os.chdir(r.pathCmpSystem)
-        subprocess.run(["ucc", "dumpint", r.pathFileU])
+        try:
+            print_separator_box("Creating INT file!")
+            os.chdir(r.pathCmpSystem)
+            subprocess.run(["ucc", "dumpint", r.pathFileU], check=True)
+        except subprocess.CalledProcessError as e:
+            print(str(e))
 
     # create UZ2 files
     if r.bMakeRedirect:
-        print_separator_box("Creating UZ2 file!")
-        os.chdir(r.pathCmpSystem)
-        subprocess.run(["ucc", "compress", r.pathFileU])
+        try:
+            print_separator_box("Creating UZ2 file!")
+            os.chdir(r.pathCmpSystem)
+            subprocess.run(["ucc", "compress", r.pathFileU], check=True)
+        except subprocess.CalledProcessError as e:
+            print(str(e))
 
     # cleanup!
     util.cleanup()
