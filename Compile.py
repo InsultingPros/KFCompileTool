@@ -11,13 +11,14 @@ import os
 import shutil
 import subprocess
 import sys
+from dataclasses import dataclass
 from configparser import ConfigParser
 from pathlib import Path
 
 #################################################################################
 #                              'CONSTANTS'
 #################################################################################
-LINE_SEPARATOR: str = "######################################################"
+LINE_SEPARATOR: str = "\n######################################################\n"
 SETTINGS_FILE: str = "CompileSettings.ini"
 """Settings file for this script, contains client-server directories and mods info"""
 CMPL_CONFIG: str = "kfcompile.ini"
@@ -27,12 +28,12 @@ REDIRECT_DIR_NAME: str = "Redirect"
 IGNORE_LIST: list[str] = [".git", "*.md", "Docs", "LICENSE"]
 """Filter for files-directories, so we copy-paste only source files"""
 
-
 #################################################################################
 #                                UTILITY
 #################################################################################
 
 
+@dataclass
 class RuntimeVars:
     """Contains 'runtime' variables"""
 
@@ -59,6 +60,24 @@ class RuntimeVars:
     pathFileGarbage: str = "fallback pathFileGarbage"
     # other
     pathMoveTo: str = "fallback pathMoveTo"
+
+    def __str__(self):
+        return (
+            f"{LINE_SEPARATOR}"
+            f"{SETTINGS_FILE}\n"
+            f"mutatorName           = {self.mutatorName}\n"
+            f"dir_Compile           = {self.dir_Compile}\n"
+            f"dir_MoveTo            = {self.dir_MoveTo}\n"
+            f"dir_ReleaseOutput     = {self.dir_ReleaseOutput}\n"
+            f"dir_Classes           = {self.dir_Classes}\n"
+            f"EditPackages          = {self.EditPackages}\n"
+            f"bICompileOutsideofKF  = {self.bICompileOutsideofKF}\n"
+            f"bAltDirectories       = {self.bAltDirectories}\n"
+            f"bMoveFiles            = {self.bMoveFiles}\n"
+            f"bCreateINT            = {self.bCreateINT}\n"
+            f"bMakeRedirect         = {self.bMakeRedirect}\n"
+            f"bMakeRelease          = {self.bMakeRelease}"
+        )
 
 
 class Types:
@@ -291,74 +310,53 @@ class ConfigHelper(Utility, Types):
         shutil.move(CMPL_CONFIG, input_dir)
 
 
-class Debug:
-    def throw_error(self, err: int):
-        """Throw human-readable error message."""
-        prefix: str = ">>> TERMINATION WARNING: "
-        match err:
-            case 0:
-                print(
-                    prefix
-                    + SETTINGS_FILE
-                    + """ was not found. We created a new file for you, in the same directory.
+def print_separator_box(msg: str) -> None:
+    """Print nice message box"""
+    print(LINE_SEPARATOR, msg, LINE_SEPARATOR)
+
+
+def throw_error(err: int):
+    """Throw human-readable error message."""
+    prefix: str = ">>> TERMINATION WARNING: "
+    match err:
+        case 0:
+            print(
+                prefix
+                + SETTINGS_FILE
+                + """ was not found. We created a new file for you, in the same directory.
                     PLEASE go and edit it to fit your needs."""
-                )
-            case 1:
-                print(
-                    prefix
-                    + """Global section not found in CompileSettings.ini.
+            )
+        case 1:
+            print(
+                prefix
+                + """Global section not found in CompileSettings.ini.
                     PLEASE go and fill it manually"""
-                )
-            case 2:
-                print(
-                    prefix
-                    + r.mutatorName
-                    + """ section not found in CompileSettings.ini.
+            )
+        case 2:
+            print(
+                prefix
+                + r.mutatorName
+                + """ section not found in CompileSettings.ini.
                     PLEASE go and fill it manually"""
-                )
-            case 3:
-                print(
-                    prefix
-                    + """UCC.exe was not found in compile directory.
+            )
+        case 3:
+            print(
+                prefix
+                + """UCC.exe was not found in compile directory.
                     PLEASE Install SDK / check your directories in Global section."""
-                )
-            case 4:
-                print(
-                    prefix
-                    + "Alternative Directory is True, but `sources` folder NOT FOUND!"
-                )
-            case 5:
-                print(prefix + "Compilation FAILED!")
-            case _:
-                print(prefix + "undefined error code!")
+            )
+        case 4:
+            print(
+                prefix
+                + "Alternative Directory is True, but `sources` folder NOT FOUND!"
+            )
+        case 5:
+            print(prefix + "Compilation FAILED!")
+        case _:
+            print(prefix + "undefined error code!")
 
-        input("Press any key to continue.")
-        exit()
-
-    def print_separator_box(self, msg: str) -> None:
-        """Print nice message box"""
-        print("\n" + LINE_SEPARATOR + "\n")
-        print(msg)
-        print("\n" + LINE_SEPARATOR + "\n")
-
-    def print_settings(self) -> None:
-        """Print Settings file contents."""
-        print(LINE_SEPARATOR + "\n")
-        print(SETTINGS_FILE + "\n")
-        #  global
-        print("mutatorName          :", r.mutatorName)
-        print("dir_Compile          :", r.dir_Compile)
-        print("dir_MoveTo           :", r.dir_MoveTo)
-        print("dir_ReleaseOutput    :", r.dir_ReleaseOutput)
-        print("dir_Classes          :", r.dir_Classes, "\n")
-        # sections
-        print("EditPackages         :", r.EditPackages)
-        print("bICompileOutsideofKF :", r.bICompileOutsideofKF)
-        print("bAltDirectories      :", r.bAltDirectories)
-        print("bMoveFiles           :", r.bMoveFiles)
-        print("bCreateINT           :", r.bCreateINT)
-        print("bMakeRedirect        :", r.bMakeRedirect)
-        print("bMakeRelease         :", r.bMakeRelease)
+    input("Press any key to close.")
+    exit()
 
 
 #################################################################################
@@ -374,13 +372,13 @@ def init_settings() -> None:
     # check if settings.ini exists in same directory
     if not Path(dir_settings_ini).is_file():
         cfghlp.create_settings_file(dir_settings_ini)
-        dbg.throw_error(0)
+        throw_error(0)
 
     config = ConfigParser()
     config.read(dir_settings_ini)
     # get global section and set main vars
     if not config.has_section("Global"):
-        dbg.throw_error(1)
+        throw_error(1)
 
     # GLOBAL
     # accept cmdline arguments
@@ -397,7 +395,7 @@ def init_settings() -> None:
     # SECTIONS
     # check if exist
     if not config.has_section(r.mutatorName):
-        dbg.throw_error(2)
+        throw_error(2)
 
     r.EditPackages = config[r.mutatorName]["EditPackages"]
     r.bICompileOutsideofKF = config[r.mutatorName].getboolean("bICompileOutsideofKF")
@@ -446,7 +444,7 @@ def compile_me() -> None:
     if r.bAltDirectories:
         sources: str = os.path.join(dir_source, "sources")
         if not Path(sources).exists():
-            dbg.throw_error(4)
+            throw_error(4)
 
         classes: str = os.path.join(dir_destination, "Classes")
         util.dir_remove(classes)
@@ -457,12 +455,12 @@ def compile_me() -> None:
                 filename = os.path.join(path, name)
                 shutil.copy2(filename, classes)
 
-    dbg.print_separator_box("COMPILING: " + r.mutatorName)
+    print_separator_box("COMPILING: " + r.mutatorName)
 
     ucc: str = os.path.join(r.pathCmpSystem, "UCC.exe")
     # check if we have UCC
     if not Path(ucc).is_file():
-        dbg.throw_error(3)
+        throw_error(3)
 
     # start the actual compilation! FINALLY!!!
     subprocess.run([ucc, "make", "ini=" + CMPL_CONFIG, "-EXPORTCACHE"])
@@ -471,17 +469,17 @@ def compile_me() -> None:
     # else we failed -> cleanup and shut down
     if not Path(os.path.join(r.pathCmpSystem, r.pathFileU)).exists():
         util.cleanup()
-        dbg.throw_error(5)
+        throw_error(5)
 
     # create INT files
     if r.bCreateINT:
-        dbg.print_separator_box("Creating INT file!")
+        print_separator_box("Creating INT file!")
         os.chdir(r.pathCmpSystem)
         subprocess.run(["ucc", "dumpint", r.pathFileU])
 
     # create UZ2 files
     if r.bMakeRedirect:
-        dbg.print_separator_box("Creating UZ2 file!")
+        print_separator_box("Creating UZ2 file!")
         os.chdir(r.pathCmpSystem)
         subprocess.run(["ucc", "compress", r.pathFileU])
 
@@ -491,7 +489,7 @@ def compile_me() -> None:
 
 def handle_files() -> None:
     # announce
-    dbg.print_separator_box("MOVING FILES")
+    print_separator_box("MOVING FILES")
 
     # do we want files being moved to desired client / server directory?
     if r.bMoveFiles:
@@ -537,27 +535,33 @@ def handle_files() -> None:
             print("Failed to create a redirect file: " + str(e))
 
 
+util: Utility
+cfghlp: ConfigHelper
+r: RuntimeVars
+
+
+def init_classes() -> None:
+    global util
+    global cfghlp
+    global r
+
+    util = Utility()
+    cfghlp = ConfigHelper()
+    r = RuntimeVars()
+
+
 #################################################################################
 #                              FUNCTION CALLS
 #################################################################################
 
 
 def main() -> None:
-    global util
-    global cfghlp
-    global r
-    global dbg
-
-    util = Utility()
-    dbg = Debug()
-    cfghlp = ConfigHelper()
-    r = RuntimeVars()
-
+    init_classes()
     # check if we have all configs and everything is fine
     # then assign global vars
     init_settings()
     # useful logs, if you want em
-    dbg.print_settings()
+    print(r)
     # compile!
     compile_me()
     handle_files()
