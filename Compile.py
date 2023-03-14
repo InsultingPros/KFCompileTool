@@ -9,12 +9,13 @@
 #################################################################################
 import os
 import shutil
-import subprocess
+from subprocess import run, CalledProcessError
 import sys
 from dataclasses import dataclass
 from configparser import ConfigParser
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 #################################################################################
 #                              'CONSTANTS'
@@ -62,15 +63,18 @@ class RuntimeVars:
     bCreateINT: bool = False
     bMakeRedirect: bool = False
     bMakeRelease: bool = False
-    # random package related
-    pathCmpSystem: str = "fallback pathCmpSystem"
-    pathFileU: str = "fallback pathFileU"
-    pathFileUCL: str = "fallback pathFileUCL"
-    pathFileUZ2: str = "fallback pathFileUZ2"
-    pathFileINT: str = "fallback pathFileINT"
-    pathFileGarbage: str = "fallback pathFileGarbage"
-    # other
-    pathMoveTo: str = "fallback pathMoveTo"
+    # paths to use
+    path_source_files: Path = Path()
+    path_compile_dir: Path = Path()
+    path_compile_dir_sys: Path = Path()
+    path_compiled_file_u: Path = Path()
+    path_compiled_file_ucl: Path = Path()
+    path_compiled_file_uz2: Path = Path()
+    path_compiled_file_int: Path = Path()
+    path_compilation_ini: Path = Path()
+    path_garbage_file: Path = Path()
+    path_release: Path = Path()
+    path_move_to: Path = Path()
 
     def __str__(self):
         return (
@@ -103,7 +107,7 @@ class Types:
         "dir_Classes": r"C:\Users\USER\Desktop\Projects",
     }
 
-    def_Mod = {
+    def_Mod: dict[str, Any] = {
         "EditPackages": "TestMutParent,TestMut",
         "bICompileOutsideofKF": False,
         "bAltDirectories": False,
@@ -177,148 +181,93 @@ class Types:
     def_Suppress: list[str] = ["DevLoad", "DevSave"]
 
 
-class Utility:
-    """Random utility functions"""
-
-    # post compilation / failure cleanup
-    def cleanup(self) -> None:
-        # remove steamapp_id.txt, its being created every time
-        util.delete_compile_dir_files(r.pathFileGarbage)
-
-        # remove compfile, we don't need it
-        util.delete_compile_dir_files(CMPL_CONFIG)
-
-        if r.bICompileOutsideofKF:
-            self.dir_remove(os.path.join(r.dir_Compile, r.mutatorName))
-
-    def get_mod_file_types(self, dir_base_name: str, file_type: int) -> str:
-        """Get file paths from type."""
-        match file_type:
-            case 1:
-                ext = ".u"
-            case 2:
-                ext = ".ucl"
-            case 3:
-                ext = ".u.uz2"
-            case 4:
-                ext = ".int"
-            case _:
-                ext = "BAD EXTENSION"
-        return os.path.join(dir_base_name, r.mutatorName + ext)
-
-    def get_mod_file_name(self, file_type: int) -> str:
-        """get file names from type"""
-        match file_type:
-            case 1:
-                return r.mutatorName + ".u"
-            case 2:
-                return r.mutatorName + ".ucl"
-            case 3:
-                return r.mutatorName + ".u.uz2"
-            case _:
-                return "fallback name + extension!"
-
-    # https://docs.python.org/3/library/shutil.html#rmtree-example
-    def remove_readonly(self, func, path, _) -> None:
-        """Clear the readonly bit and reattempt the removal"""
-        Path(path).chmod(0o0200)
-        func(path)
-
-    def dir_remove(self, input_dir: str) -> None:
-        """remove new created 'classes' folder on alternate dir style"""
-        if Path(input_dir).exists():
-            shutil.rmtree(input_dir, onerror=self.remove_readonly)
-
-    def delete_compile_dir_files(self, file: str) -> None:
-        """Check and delete the file"""
-        if Path(os.path.join(r.pathCmpSystem, file)).is_file():
-            try:
-                Path(os.path.join(r.pathCmpSystem, file)).unlink()
-            except PermissionError as e:
-                sys.exit("Failed to delete the file: " + str(e))
-
-    def get_system_dir(self, dir_base: str) -> str:
-        """Get system directory"""
-        return os.path.join(dir_base, "System")
-
-    def copy_file(self, dir_source, dir_destination) -> None:
-        if not Path(dir_source).is_file():
-            return
-        shutil.copy(dir_source, dir_destination)
-        print("> Copied:  " + dir_source + "  --->  " + dir_destination)
-
-    def get_dir_redirect(self, dir_input: str) -> str:
-        """Get / create redirect directory in selected directory"""
-        dir_destination = os.path.join(dir_input, REDIRECT_DIR_NAME)
-        # check if path exist and create otherwise
-        if not Path(dir_destination).exists():
-            Path(dir_destination).mkdir()
-        return dir_destination
+def safe_delete_file(input_path: Path) -> None:
+    """Check and delete the file"""
+    if input_path.exists() and input_path.is_file():
+        try:
+            input_path.unlink()
+        except PermissionError as e:
+            sys.exit("Failed to delete the file: " + str(e))
 
 
-class ConfigHelper(Utility, Types):
-    """Class for working with config file"""
+def copy_file(source_path: Path, destination_path: Path) -> None:
+    if not source_path.is_file():
+        return
+    try:
+        shutil.copy(source_path, destination_path)
+        print("> Copied:  ", source_path, "  --->  ", destination_path)
+    except PermissionError as e:
+        sys.exit("Failed to copy the file: " + str(e))
 
-    def create_settings_file(self, input_dir):
-        """Create DEFAULT config file if none found"""
-        config = ConfigParser()
-        # save the case
-        config.optionxform = str
 
-        config["Global"] = self.def_Global
-        config["TestMut"] = self.def_Mod
+# post compilation / failure cleanup
+def cleanup_files() -> None:
+    # remove garbage-temporary files
+    safe_delete_file(r.path_garbage_file)
+    safe_delete_file(r.path_compilation_ini)
 
-        with open(input_dir, "w") as configfile:
-            config.write(configfile, space_around_delimiters=False)
+    if r.bICompileOutsideofKF:
+        safe_delete_dir(r.path_compile_dir.joinpath(r.mutatorName))
 
-    def create_def_compile_ini(self, input_dir) -> None:
-        """Create DEFAULT config file if none found"""
-        # print(sys_dir)
-        # make sure we don't have old files
-        os.path.join(os.path.dirname(os.path.realpath(__file__)), CMPL_CONFIG)
 
-        def write_line_to_config(text: str) -> None:
-            """Write single line to file"""
-            with open(CMPL_CONFIG, "a") as f:
-                f.writelines([text + "\n"])
+# https://docs.python.org/3/library/shutil.html#rmtree-example
+def remove_readonly(func, path, _) -> None:
+    """Clear the readonly bit and reattempt the removal"""
+    Path(path).chmod(0o0200)
+    func(path)
 
-        def write_list_to_config(key: str, input_list: list[str]) -> None:
-            """Add lines at the end of the file"""
-            with open(CMPL_CONFIG, "a") as f:
-                for x in input_list:
-                    f.writelines([key + "=" + x + "\n"])
 
-        def write_dict_to_config(input_dict: dict[str, str]) -> None:
-            """write key-value from dictionary"""
-            with open(CMPL_CONFIG, "a") as f:
-                for k, v in input_dict.items():
-                    f.writelines([k + "=" + v + "\n"])
+def safe_delete_dir(input_path: Path) -> None:
+    """remove new created 'classes' folder on alternate dir style"""
+    if input_path.exists():
+        shutil.rmtree(input_path, onerror=remove_readonly)
 
-        # SECTION 1
-        write_line_to_config("[Editor.EditorEngine]")
 
-        write_list_to_config("EditPackages", self.def_EditPackages)
-        write_line_to_config("\n")
+def create_def_compile_ini(destination_path: Path) -> None:
+    """Create DEFAULT config file if none found"""
 
-        # SECTION 2
-        write_line_to_config("[Engine.Engine]")
-        write_dict_to_config(self.EngineDict)
-        write_line_to_config("\n")
+    def write_line_to_config(text: str) -> None:
+        """Write single line to file"""
+        with open(destination_path, "a") as f:
+            f.writelines([text + "\n"])
 
-        # SECTION 3
-        write_line_to_config("[Core.System]")
-        write_dict_to_config(self.SysDict)
+    def write_list_to_config(key: str, input_list: list[str]) -> None:
+        """Add lines at the end of the file"""
+        with open(destination_path, "a") as f:
+            for x in input_list:
+                f.writelines([key + "=" + x + "\n"])
 
-        write_list_to_config("Paths", self.def_paths)
-        write_list_to_config("Suppress", self.def_Suppress)
-        write_line_to_config("\n")
+    def write_dict_to_config(input_dict: dict[str, str]) -> None:
+        """write key-value from dictionary"""
+        with open(destination_path, "a") as f:
+            for k, v in input_dict.items():
+                f.writelines([k + "=" + v + "\n"])
 
-        # SECTION 4
-        # if we don't add this section, we will get some other garbage being written
-        write_line_to_config("[ROFirstRun]")
-        write_line_to_config("ROFirstRun=1094\n")
+    # SECTION 1
+    write_line_to_config("[Editor.EditorEngine]")
 
-        shutil.move(CMPL_CONFIG, input_dir)
+    write_list_to_config("EditPackages", Types.def_EditPackages)
+    write_line_to_config("\n")
+
+    # SECTION 2
+    write_line_to_config("[Engine.Engine]")
+    write_dict_to_config(Types.EngineDict)
+    write_line_to_config("\n")
+
+    # SECTION 3
+    write_line_to_config("[Core.System]")
+    write_dict_to_config(Types.SysDict)
+
+    write_list_to_config("Paths", Types.def_paths)
+    write_list_to_config("Suppress", Types.def_Suppress)
+    write_line_to_config("\n")
+
+    # SECTION 4
+    # if we don't add this section, we will get some other garbage being written
+    write_line_to_config("[ROFirstRun]")
+    write_line_to_config("ROFirstRun=1094\n")
+
+    # shutil.move(CMPL_CONFIG, destination_path)
 
 
 def print_separator_box(msg: str) -> None:
@@ -377,12 +326,25 @@ def throw_error(err: ERROR):
 
 def init_settings() -> None:
     """Read config file and define all variables."""
+
+    def create_settings_file(input_dir) -> None:
+        """Create DEFAULT config file if none found"""
+        config = ConfigParser()
+        # save the case
+        config.optionxform = str
+
+        config["Global"] = Types.def_Global
+        config["TestMut"] = Types.def_Mod
+
+        with open(input_dir, "w") as configfile:
+            config.write(configfile, space_around_delimiters=False)
+
     # self directory
     dir_script: str = os.path.dirname(os.path.realpath(__file__))
     dir_settings_ini: str = os.path.join(dir_script, SETTINGS_FILE)
     # check if settings.ini exists in same directory
     if not Path(dir_settings_ini).is_file():
-        cfghlp.create_settings_file(dir_settings_ini)
+        create_settings_file(dir_settings_ini)
         throw_error(ERROR.NO_SETTINGS)
 
     config = ConfigParser()
@@ -416,34 +378,49 @@ def init_settings() -> None:
     r.bMakeRedirect = config[r.mutatorName].getboolean("bMakeRedirect")
     r.bMakeRelease = config[r.mutatorName].getboolean("bMakeRelease")
 
-    # RANDOM
-    r.pathCmpSystem = util.get_system_dir(r.dir_Compile)
-    r.pathFileU = util.get_mod_file_types(r.pathCmpSystem, 1)
-    r.pathFileUCL = util.get_mod_file_types(r.pathCmpSystem, 2)
-    r.pathFileUZ2 = util.get_mod_file_types(r.pathCmpSystem, 3)
-    r.pathFileINT = util.get_mod_file_types(r.pathCmpSystem, 4)
-    r.pathFileGarbage = os.path.join(r.pathCmpSystem, "steam_appid.txt")
+    # paths to dirs
+    r.path_source_files = Path(r.dir_Classes)
+    r.path_compile_dir = Path(r.dir_Compile)
+    r.path_compile_dir_sys = r.path_compile_dir.joinpath("System")
+    r.path_release = Path(r.dir_ReleaseOutput)
+    r.path_move_to = Path(r.dir_MoveTo)
+    # paths to files
+    r.path_garbage_file = r.path_compile_dir_sys.joinpath("steam_appid.txt")
+    r.path_compilation_ini = r.path_compile_dir_sys.joinpath(CMPL_CONFIG)
+    r.path_compiled_file_u = r.path_compile_dir_sys.joinpath(
+        "{}.{}".format(r.mutatorName, "u")
+    )
+    r.path_compiled_file_ucl = r.path_compile_dir_sys.joinpath(
+        "{}.{}".format(r.mutatorName, "ucl")
+    )
+    r.path_compiled_file_uz2 = r.path_compile_dir_sys.joinpath(
+        "{}.{}".format(r.mutatorName, "u.uz2")
+    )
+    r.path_compiled_file_int = r.path_compile_dir_sys.joinpath(
+        "{}.{}".format(r.mutatorName, "int")
+    )
 
     # make sure there are no old files
-    util.delete_compile_dir_files(CMPL_CONFIG)
+    safe_delete_file(r.path_compilation_ini)
 
     # update editPackages and create the kf.ini
     Types.def_EditPackages.extend(r.EditPackages.split(","))
-    cfghlp.create_def_compile_ini(r.pathCmpSystem)
+    create_def_compile_ini(r.path_compilation_ini)
 
 
 def compile_me() -> None:
-    # delete files before compilation start, since UCC is ghei
-    util.delete_compile_dir_files(r.pathFileU)
-    util.delete_compile_dir_files(r.pathFileUCL)
+    # delete old files before compilation start, since UCC is ghei
+    safe_delete_file(r.path_compiled_file_u)
+    safe_delete_file(r.path_compiled_file_ucl)
+    safe_delete_file(r.path_compiled_file_int)
 
-    dir_source: str = os.path.join(r.dir_Classes, r.mutatorName)
-    dir_destination: str = os.path.join(r.dir_Compile, r.mutatorName)
+    dir_source: Path = r.path_source_files.joinpath(r.mutatorName)
+    dir_destination: Path = r.path_compile_dir.joinpath(r.mutatorName)
     # if our mod files are in other directory, just copy-paste everything from there
 
     # if mod folder is outside, delete old dir and copy-paste new one
     if r.bICompileOutsideofKF:
-        util.dir_remove(dir_destination)
+        safe_delete_dir(dir_destination)
         shutil.copytree(
             dir_source,
             dir_destination,
@@ -453,12 +430,12 @@ def compile_me() -> None:
 
     # if we use alternative directory style, we need to do some work
     if r.bAltDirectories:
-        sources: str = os.path.join(dir_source, "sources")
-        if not Path(sources).exists():
+        sources: Path = dir_source.joinpath("sources")
+        if not sources.exists():
             throw_error(ERROR.WRONG_DIR_STYLE)
 
-        classes: str = os.path.join(dir_destination, "Classes")
-        util.dir_remove(classes)
+        classes: Path = dir_destination.joinpath("Classes")
+        safe_delete_dir(classes)
         Path(classes).mkdir()
         # now copy everything!
         for path, subdir, files in os.walk(sources):
@@ -468,39 +445,39 @@ def compile_me() -> None:
 
     print_separator_box("COMPILING: " + r.mutatorName)
 
-    ucc: str = os.path.join(r.pathCmpSystem, "UCC.exe")
+    ucc: Path = r.path_compile_dir_sys.joinpath("UCC.exe")
     # check if we have UCC
-    if not Path(ucc).is_file():
+    if not ucc.is_file():
         throw_error(ERROR.NO_UCC)
 
     # start the actual compilation! FINALLY!!!
     try:
-        subprocess.run([ucc, "make", "ini=" + CMPL_CONFIG, "-EXPORTCACHE"], check=True)
-    except subprocess.CalledProcessError as e:
+        run([ucc, "make", "ini=" + CMPL_CONFIG, "-EXPORTCACHE"], check=True)
+    except CalledProcessError as e:
         print(str(e))
-        util.cleanup()
+        cleanup_files()
         throw_error(ERROR.COMPILATION_FAILED)
 
     # create INT files
     if r.bCreateINT:
         try:
             print_separator_box("Creating INT file!")
-            os.chdir(r.pathCmpSystem)
-            subprocess.run(["ucc", "dumpint", r.pathFileU], check=True)
-        except subprocess.CalledProcessError as e:
+            os.chdir(r.path_compile_dir_sys)
+            run(["ucc", "dumpint", r.path_compiled_file_u], check=True)
+        except CalledProcessError as e:
             print(str(e))
 
     # create UZ2 files
     if r.bMakeRedirect:
         try:
             print_separator_box("Creating UZ2 file!")
-            os.chdir(r.pathCmpSystem)
-            subprocess.run(["ucc", "compress", r.pathFileU], check=True)
-        except subprocess.CalledProcessError as e:
+            os.chdir(r.path_compile_dir_sys)
+            run(["ucc", "compress", r.path_compiled_file_u], check=True)
+        except CalledProcessError as e:
             print(str(e))
 
     # cleanup!
-    util.cleanup()
+    cleanup_files()
 
 
 def handle_files() -> None:
@@ -511,68 +488,59 @@ def handle_files() -> None:
     if r.bMoveFiles:
         try:
             print(">>> Moving files to CLIENT directory.\n")
-            dir_destination: str = util.get_system_dir(r.dir_MoveTo)
-            util.copy_file(r.pathFileU, dir_destination)
-            util.copy_file(r.pathFileUCL, dir_destination)
-            util.copy_file(r.pathFileINT, dir_destination)
+            destination: Path = r.path_move_to.joinpath("System")
+            copy_file(r.path_compiled_file_u, destination)
+            copy_file(r.path_compiled_file_ucl, destination)
+            copy_file(r.path_compiled_file_int, destination)
         except Exception as e:
             print("Failed to move compiled files: " + str(e))
 
     if r.bMakeRelease:
         try:
             print(">>> Moving files to output directory.\n")
-            x: str = os.path.join(r.dir_ReleaseOutput, r.mutatorName)
+            path_release: Path = r.path_release.joinpath(r.mutatorName)
+            # cleanup old files at first
+            safe_delete_dir(path_release)
             # if 'Redirect' folder doesn't exist, create it
-            if not Path(x).exists():
-                Path(x).mkdir()
+            if not path_release.exists():
+                path_release.mkdir()
             # copy files
-            util.copy_file(r.pathFileU, x)
-            util.copy_file(r.pathFileUCL, x)
-        except Exception as e:
-            print("Failed to create a release file: " + str(e))
+            copy_file(r.path_compiled_file_u, path_release)
+            copy_file(r.path_compiled_file_ucl, path_release)
+            copy_file(r.path_compiled_file_int, path_release)
 
-        if r.bMakeRedirect:
-            try:
-                y = os.path.join(x, REDIRECT_DIR_NAME)
-                if not Path(y).exists():
-                    Path(y).mkdir()
+            if r.bMakeRedirect:
+                path_redirect: Path = path_release.joinpath(REDIRECT_DIR_NAME)
+                if not path_redirect.exists():
+                    path_redirect.mkdir()
                 # copy files
-                util.copy_file(r.pathFileUZ2, y)
-            except Exception as e:
-                print("Failed to create a redirect file in release folder: " + str(e))
+                copy_file(r.path_compiled_file_uz2, path_redirect)
+        except Exception as e:
+            print("Failed to create a redirect file in release folder: " + str(e))
 
     # remove the file from system after everything else is done
     if r.bMakeRedirect:
         try:
             print("\n>>> Moving redirect file to redirect directory.\n")
-            util.copy_file(r.pathFileUZ2, r.dir_Compile + "/" + REDIRECT_DIR_NAME)
-            util.delete_compile_dir_files(r.pathFileUZ2)
+            copy_file(
+                r.path_compiled_file_uz2, r.path_compile_dir.joinpath(REDIRECT_DIR_NAME)
+            )
+            safe_delete_file(r.path_compiled_file_uz2)
         except Exception as e:
             print("Failed to create a redirect file: " + str(e))
-
-
-util: Utility
-cfghlp: ConfigHelper
-r: RuntimeVars
-
-
-def init_classes() -> None:
-    global util
-    global cfghlp
-    global r
-
-    util = Utility()
-    cfghlp = ConfigHelper()
-    r = RuntimeVars()
 
 
 #################################################################################
 #                              FUNCTION CALLS
 #################################################################################
 
+r: RuntimeVars
+
 
 def main() -> None:
-    init_classes()
+    global r
+
+    r = RuntimeVars()
     # check if we have all configs and everything is fine
     # then assign global vars
     init_settings()
