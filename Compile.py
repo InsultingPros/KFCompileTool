@@ -15,20 +15,96 @@ from dataclasses import dataclass
 from configparser import ConfigParser
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 #################################################################################
 #                              'CONSTANTS'
 #################################################################################
 LINE_SEPARATOR: str = "\n######################################################\n"
-SETTINGS_FILE: str = "CompileSettings.ini"
+SETTINGS_FILE_NAME: str = "CompileSettings.ini"
 """Settings file for this script, contains client-server directories and mods info"""
-CMPL_CONFIG: str = "kfcompile.ini"
+COMPILATION_CONFIG_NAME: str = "kfcompile.ini"
 """Game config that UCC.exe uses for compilation, contains EditPackages lines and the most minimal setup"""
 REDIRECT_DIR_NAME: str = "Redirect"
 """Folder name for redirect files"""
 IGNORE_LIST: list[str] = [".git", "*.md", "Docs", "LICENSE"]
 """Filter for files-directories, so we copy-paste only source files"""
+
+SETTINGS_FILE_CONTENT: str = r"""[Global]
+mutatorName=TestMut
+dir_Compile=D:\Games\SteamLibrary\steamapps\common\KillingFloor
+dir_MoveTo=D:\Games\KF Dedicated Server
+dir_ReleaseOutput=C:\Users\USER\Desktop\Mutators
+dir_Classes=C:\Users\USER\Desktop\Projects
+
+[TestMut]
+EditPackages=TestMutParent,TestMut
+bICompileOutsideofKF=False
+bAltDirectories=False
+bMoveFiles=False
+bCreateINT=False
+bMakeRedirect=False
+bMakeRelease=False
+"""
+
+COMPILATION_CONFIG_CONTENT: str = """;= WARNING! This file is generated for compilation and and is meant to be one time use.
+[Engine.Engine]
+EditorEngine=Editor.EditorEngine
+
+[Core.System]
+CacheRecordPath=../System/*.ucl
+Paths=../System/*.u
+Paths=../Maps/*.rom
+Paths=../TestMaps/*.rom
+Paths=../Textures/*.utx
+Paths=../Sounds/*.uax
+Paths=../Music/*.umx
+Paths=../StaticMeshes/*.usx
+Paths=../Animations/*.ukx
+Paths=../Saves/*.uvx
+Paths=../Textures/Old2k4/*.utx
+Paths=../Sounds/Old2k4/*.uax
+Paths=../Music/Old2k4/*.umx
+Paths=../StaticMeshes/Old2k4/*.usx
+Paths=../Animations/Old2k4/*.ukx
+Paths=../KarmaData/Old2k4/*.ka
+Suppress=DevLoad
+Suppress=DevSave
+
+[ROFirstRun]
+ROFirstRun=1094
+
+[Editor.EditorEngine]
+EditPackages=Core
+EditPackages=Engine
+EditPackages=Fire
+EditPackages=Editor
+EditPackages=UnrealEd
+EditPackages=IpDrv
+EditPackages=UWeb
+EditPackages=GamePlay
+EditPackages=UnrealGame
+EditPackages=XGame
+EditPackages=XInterface
+EditPackages=XAdmin
+EditPackages=XWebAdmin
+EditPackages=GUI2K4
+EditPackages=xVoting
+EditPackages=UTV2004c
+EditPackages=UTV2004s
+EditPackages=ROEffects
+EditPackages=ROEngine
+EditPackages=ROInterface
+EditPackages=Old2k4
+EditPackages=KFMod
+EditPackages=KFChar
+EditPackages=KFGui
+EditPackages=GoodKarma
+EditPackages=KFMutators
+EditPackages=KFStoryGame
+EditPackages=KFStoryUI
+EditPackages=SideShowScript
+EditPackages=FrightScript
+"""
 
 
 class ERROR(Enum):
@@ -79,7 +155,7 @@ class RuntimeVars:
     def __str__(self):
         return (
             f"{LINE_SEPARATOR}"
-            f"{SETTINGS_FILE}\n"
+            f"{SETTINGS_FILE_NAME}\n"
             f"mutatorName           = {self.mutatorName}\n"
             f"dir_Compile           = {self.dir_Compile}\n"
             f"dir_MoveTo            = {self.dir_MoveTo}\n"
@@ -93,92 +169,6 @@ class RuntimeVars:
             f"bMakeRedirect         = {self.bMakeRedirect}\n"
             f"bMakeRelease          = {self.bMakeRelease}"
         )
-
-
-class Types:
-    """Contains lists, dicts used to populate kfcompile.ini / CompileSettings.ini"""
-
-    # CompileSettings.ini
-    def_Global: dict[str, str] = {
-        "mutatorName": "TestMut",
-        "dir_Compile": r"D:\Games\SteamLibrary\steamapps\common\KillingFloor",
-        "dir_MoveTo": r"D:\Games\KF Dedicated Server",
-        "dir_ReleaseOutput": r"C:\Users\USER\Desktop\Mutators",
-        "dir_Classes": r"C:\Users\USER\Desktop\Projects",
-    }
-
-    def_Mod: dict[str, Any] = {
-        "EditPackages": "TestMutParent,TestMut",
-        "bICompileOutsideofKF": False,
-        "bAltDirectories": False,
-        "bMoveFiles": False,
-        "bCreateINT": False,
-        "bMakeRedirect": False,
-        "bMakeRelease": False,
-    }
-
-    # kfcompile.ini
-    # [Editor.EditorEngine]
-    def_EditPackages: list[str] = [
-        "Core",
-        "Engine",
-        "Fire",
-        "Editor",
-        "UnrealEd",
-        "IpDrv",
-        "UWeb",
-        "GamePlay",
-        "UnrealGame",
-        "XGame",
-        "XInterface",
-        "XAdmin",
-        "XWebAdmin",
-        "GUI2K4",
-        "xVoting",
-        "UTV2004c",
-        "UTV2004s",
-        "ROEffects",
-        "ROEngine",
-        "ROInterface",
-        "Old2k4",
-        "KFMod",
-        "KFChar",
-        "KFGui",
-        "GoodKarma",
-        "KFMutators",
-        "KFStoryGame",
-        "KFStoryUI",
-        "SideShowScript",
-        "FrightScript",
-    ]
-
-    # [Engine.Engine]
-    # this setting is enough
-    EngineDict: dict[str, str] = {"EditorEngine": "Editor.EditorEngine"}
-
-    # [Core.System]
-    # this too
-    SysDict: dict[str, str] = {"CacheRecordPath": "../System/*.ucl"}
-
-    def_paths: list[str] = [
-        "../System/*.u",
-        "../Maps/*.rom",
-        "../TestMaps/*.rom",
-        "../Textures/*.utx",
-        "../Sounds/*.uax",
-        "../Music/*.umx",
-        "../StaticMeshes/*.usx",
-        "../Animations/*.ukx",
-        "../Saves/*.uvx",
-        "../Textures/Old2k4/*.utx",
-        "../Sounds/Old2k4/*.uax",
-        "../Music/Old2k4/*.umx",
-        "../StaticMeshes/Old2k4/*.usx",
-        "../Animations/Old2k4/*.ukx",
-        "../KarmaData/Old2k4/*.ka",
-    ]
-
-    def_Suppress: list[str] = ["DevLoad", "DevSave"]
 
 
 def safe_delete_file(input_path: Path) -> None:
@@ -223,53 +213,6 @@ def safe_delete_dir(input_path: Path) -> None:
         shutil.rmtree(input_path, onerror=remove_readonly)
 
 
-def create_def_compile_ini(destination_path: Path) -> None:
-    """Create DEFAULT config file if none found"""
-
-    def write_line_to_config(text: str) -> None:
-        """Write single line to file"""
-        with open(destination_path, "a") as f:
-            f.writelines([text + "\n"])
-
-    def write_list_to_config(key: str, input_list: list[str]) -> None:
-        """Add lines at the end of the file"""
-        with open(destination_path, "a") as f:
-            for x in input_list:
-                f.writelines([key + "=" + x + "\n"])
-
-    def write_dict_to_config(input_dict: dict[str, str]) -> None:
-        """write key-value from dictionary"""
-        with open(destination_path, "a") as f:
-            for k, v in input_dict.items():
-                f.writelines([k + "=" + v + "\n"])
-
-    # SECTION 1
-    write_line_to_config("[Editor.EditorEngine]")
-
-    write_list_to_config("EditPackages", Types.def_EditPackages)
-    write_line_to_config("\n")
-
-    # SECTION 2
-    write_line_to_config("[Engine.Engine]")
-    write_dict_to_config(Types.EngineDict)
-    write_line_to_config("\n")
-
-    # SECTION 3
-    write_line_to_config("[Core.System]")
-    write_dict_to_config(Types.SysDict)
-
-    write_list_to_config("Paths", Types.def_paths)
-    write_list_to_config("Suppress", Types.def_Suppress)
-    write_line_to_config("\n")
-
-    # SECTION 4
-    # if we don't add this section, we will get some other garbage being written
-    write_line_to_config("[ROFirstRun]")
-    write_line_to_config("ROFirstRun=1094\n")
-
-    # shutil.move(CMPL_CONFIG, destination_path)
-
-
 def print_separator_box(msg: str) -> None:
     """Print nice message box"""
     print(LINE_SEPARATOR, msg, LINE_SEPARATOR)
@@ -282,7 +225,7 @@ def throw_error(err: ERROR):
         case ERROR.NO_SETTINGS:
             print(
                 prefix
-                + SETTINGS_FILE
+                + SETTINGS_FILE_NAME
                 + """ was not found. We created a new file for you, in the same directory.
                     PLEASE go and edit it to fit your needs."""
             )
@@ -327,24 +270,26 @@ def throw_error(err: ERROR):
 def init_settings() -> None:
     """Read config file and define all variables."""
 
-    def create_settings_file(input_dir) -> None:
+    def create_compilation_ini(
+        destination_path: Path, edit_packages_list: list[str]
+    ) -> None:
         """Create DEFAULT config file if none found"""
-        config = ConfigParser()
-        # save the case
-        config.optionxform = str
+        with open(destination_path, "a") as f:
+            f.write(COMPILATION_CONFIG_CONTENT)
 
-        config["Global"] = Types.def_Global
-        config["TestMut"] = Types.def_Mod
+            for package in edit_packages_list:
+                f.writelines(f"EditPackages={package}\n")
 
-        with open(input_dir, "w") as configfile:
-            config.write(configfile, space_around_delimiters=False)
+    def create_default_settings_file(input_dir) -> None:
+        with open(input_dir, "w") as f:
+            f.write(SETTINGS_FILE_CONTENT)
 
     # self directory
     dir_script: str = os.path.dirname(os.path.realpath(__file__))
-    dir_settings_ini: str = os.path.join(dir_script, SETTINGS_FILE)
+    dir_settings_ini: str = os.path.join(dir_script, SETTINGS_FILE_NAME)
     # check if settings.ini exists in same directory
     if not Path(dir_settings_ini).is_file():
-        create_settings_file(dir_settings_ini)
+        create_default_settings_file(dir_settings_ini)
         throw_error(ERROR.NO_SETTINGS)
 
     config = ConfigParser()
@@ -386,7 +331,7 @@ def init_settings() -> None:
     r.path_move_to = Path(r.dir_MoveTo)
     # paths to files
     r.path_garbage_file = r.path_compile_dir_sys.joinpath("steam_appid.txt")
-    r.path_compilation_ini = r.path_compile_dir_sys.joinpath(CMPL_CONFIG)
+    r.path_compilation_ini = r.path_compile_dir_sys.joinpath(COMPILATION_CONFIG_NAME)
     r.path_compiled_file_u = r.path_compile_dir_sys.joinpath(
         "{}.{}".format(r.mutatorName, "u")
     )
@@ -404,8 +349,7 @@ def init_settings() -> None:
     safe_delete_file(r.path_compilation_ini)
 
     # update editPackages and create the kf.ini
-    Types.def_EditPackages.extend(r.EditPackages.split(","))
-    create_def_compile_ini(r.path_compilation_ini)
+    create_compilation_ini(r.path_compilation_ini, r.EditPackages.split(","))
 
 
 def compile_me() -> None:
@@ -452,7 +396,7 @@ def compile_me() -> None:
 
     # start the actual compilation! FINALLY!!!
     try:
-        run([ucc, "make", "ini=" + CMPL_CONFIG, "-EXPORTCACHE"], check=True)
+        run([ucc, "make", "ini=" + COMPILATION_CONFIG_NAME, "-EXPORTCACHE"], check=True)
     except CalledProcessError as e:
         print(str(e))
         cleanup_files()
@@ -551,7 +495,7 @@ def main() -> None:
     handle_files()
 
     # exit the script, everything is done
-    input("\n" + "Press any key to continue.")
+    input("\nPress any key to continue.\n")
 
 
 if __name__ == "__main__":
