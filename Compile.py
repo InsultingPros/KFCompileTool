@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from configparser import ConfigParser
 from enum import Enum
 from pathlib import Path
+from typing import NoReturn
 
 #################################################################################
 #                              'CONSTANTS'
@@ -152,7 +153,7 @@ class RuntimeVars:
     path_release: Path = Path()
     path_move_to: Path = Path()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"{LINE_SEPARATOR}"
             f"{SETTINGS_FILE_NAME}\n"
@@ -218,7 +219,7 @@ def print_separator_box(msg: str) -> None:
     print(LINE_SEPARATOR, msg, LINE_SEPARATOR)
 
 
-def throw_error(err: ERROR):
+def throw_error(err: ERROR) -> NoReturn:
     """Throw human-readable error message."""
     prefix: str = ">>> TERMINATION WARNING: "
     match err:
@@ -255,8 +256,6 @@ def throw_error(err: ERROR):
             )
         case ERROR.COMPILATION_FAILED:
             print(prefix + "Compilation FAILED!")
-        case _:
-            print(prefix + "undefined error code!")
 
     input("Press any key to close.")
     exit()
@@ -280,7 +279,7 @@ def init_settings() -> None:
             for package in edit_packages_list:
                 f.writelines(f"EditPackages={package}\n")
 
-    def create_default_settings_file(input_dir) -> None:
+    def create_default_settings_file(input_dir: str) -> None:
         with open(input_dir, "w") as f:
             f.write(SETTINGS_FILE_CONTENT)
 
@@ -292,7 +291,7 @@ def init_settings() -> None:
         create_default_settings_file(dir_settings_ini)
         throw_error(ERROR.NO_SETTINGS)
 
-    config = ConfigParser()
+    config: ConfigParser = ConfigParser()
     config.read(dir_settings_ini)
     # get global section and set main vars
     if not config.has_section("Global"):
