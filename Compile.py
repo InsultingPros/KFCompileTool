@@ -186,7 +186,7 @@ def copy_file(source_path: Path, destination_path: Path) -> None:
     try:
         shutil.copy(source_path, destination_path)
         print("> Copied:  ", source_path, "  --->  ", destination_path)
-    except PermissionError as e:
+    except Exception as e:
         sys.exit("Failed to copy the file: " + str(e))
 
 
@@ -367,18 +367,19 @@ def compile_me() -> None:
 
     # if we use alternative directory style, we need to do some work
     if r.bAltDirectories:
-        sources: Path = dir_source.joinpath("sources")
-        if not sources.exists():
+        path_sources: Path = dir_source.joinpath("sources")
+        if not path_sources.exists():
             throw_error(ERROR.WRONG_DIR_STYLE)
 
         path_classes: Path = dir_destination.joinpath("Classes")
         safe_delete_dir(path_classes)
         path_classes.mkdir()
-        # now copy everything!
-        for path, subdir, files in os.walk(sources):
-            for name in files:
-                filename = os.path.join(path, name)
-                shutil.copy2(filename, path_classes)
+        # now copy `*.uc` files from `sources` to `classes`, so UCC can process them
+        for file in path_sources.rglob("*.uc"):
+            try:
+                shutil.copy2(file, path_classes)
+            except Exception as e:
+                print("Failed to copy the file: ", str(e))
 
     print_separator_box("COMPILING: " + r.mutatorName)
 
