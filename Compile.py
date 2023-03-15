@@ -279,20 +279,20 @@ def init_settings() -> None:
             for package in edit_packages_list:
                 f.writelines(f"EditPackages={package}\n")
 
-    def create_default_settings_file(input_dir: str) -> None:
+    def create_default_settings_file(input_dir: Path) -> None:
         with open(input_dir, "w") as f:
             f.write(SETTINGS_FILE_CONTENT)
 
     # self directory
-    dir_script: str = os.path.dirname(os.path.realpath(__file__))
-    dir_settings_ini: str = os.path.join(dir_script, SETTINGS_FILE_NAME)
+    path_script: Path = Path(os.path.realpath(__file__))
+    path_settings_ini: Path = path_script.parent.joinpath(SETTINGS_FILE_NAME)
     # check if settings.ini exists in same directory
-    if not Path(dir_settings_ini).is_file():
-        create_default_settings_file(dir_settings_ini)
+    if not path_settings_ini.is_file():
+        create_default_settings_file(path_settings_ini)
         throw_error(ERROR.NO_SETTINGS)
 
     config: ConfigParser = ConfigParser()
-    config.read(dir_settings_ini)
+    config.read(path_settings_ini)
     # get global section and set main vars
     if not config.has_section("Global"):
         throw_error(ERROR.NO_GLOBAL_SECTION)
