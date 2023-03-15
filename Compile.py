@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from configparser import ConfigParser
 from enum import Enum
 from pathlib import Path
-from typing import NoReturn
+from typing import Any, NoReturn
 
 #################################################################################
 #                              'CONSTANTS'
@@ -202,7 +202,7 @@ def cleanup_files() -> None:
 
 
 # https://docs.python.org/3/library/shutil.html#rmtree-example
-def remove_readonly(func, path, _) -> None:
+def remove_readonly(func: Any, path: Any, _: Any) -> None:
     """Clear the readonly bit and reattempt the removal"""
     Path(path).chmod(0o0200)
     func(path)
