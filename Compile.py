@@ -332,18 +332,11 @@ def init_settings() -> None:
     # paths to files
     r.path_garbage_file = r.path_compile_dir_sys.joinpath("steam_appid.txt")
     r.path_compilation_ini = r.path_compile_dir_sys.joinpath(COMPILATION_CONFIG_NAME)
-    r.path_compiled_file_u = r.path_compile_dir_sys.joinpath(
-        "{}.{}".format(r.mutatorName, "u")
-    )
-    r.path_compiled_file_ucl = r.path_compile_dir_sys.joinpath(
-        "{}.{}".format(r.mutatorName, "ucl")
-    )
-    r.path_compiled_file_uz2 = r.path_compile_dir_sys.joinpath(
-        "{}.{}".format(r.mutatorName, "u.uz2")
-    )
-    r.path_compiled_file_int = r.path_compile_dir_sys.joinpath(
-        "{}.{}".format(r.mutatorName, "int")
-    )
+    path_compiled_file_name: Path = r.path_compile_dir_sys.joinpath(r.mutatorName)
+    r.path_compiled_file_u = path_compiled_file_name.with_suffix(".u")
+    r.path_compiled_file_ucl = path_compiled_file_name.with_suffix(".ucl")
+    r.path_compiled_file_uz2 = path_compiled_file_name.with_suffix(".u.uz2")
+    r.path_compiled_file_int = path_compiled_file_name.with_suffix(".int")
 
     # make sure there are no old files
     safe_delete_file(r.path_compilation_ini)
@@ -378,14 +371,14 @@ def compile_me() -> None:
         if not sources.exists():
             throw_error(ERROR.WRONG_DIR_STYLE)
 
-        classes: Path = dir_destination.joinpath("Classes")
-        safe_delete_dir(classes)
-        Path(classes).mkdir()
+        path_classes: Path = dir_destination.joinpath("Classes")
+        safe_delete_dir(path_classes)
+        path_classes.mkdir()
         # now copy everything!
         for path, subdir, files in os.walk(sources):
             for name in files:
                 filename = os.path.join(path, name)
-                shutil.copy2(filename, classes)
+                shutil.copy2(filename, path_classes)
 
     print_separator_box("COMPILING: " + r.mutatorName)
 
