@@ -145,6 +145,7 @@ class RuntimeVars:
     # paths to use
     path_source_files: Path = Path()
     path_compile_dir: Path = Path()
+    path_ucc: Path = Path()
     path_compile_dir_sys: Path = Path()
     path_compiled_file_u: Path = Path()
     path_compiled_file_ucl: Path = Path()
@@ -335,6 +336,10 @@ def init_settings() -> None:
     if not r.path_compile_dir.exists():
         throw_error(ERROR.NO_COMPILE_DIR)
     r.path_compile_dir_sys = r.path_compile_dir.joinpath("System")
+    r.path_ucc = r.path_compile_dir_sys.joinpath("UCC.exe")
+    # check if we have UCC
+    if not r.path_ucc.is_file():
+        throw_error(ERROR.NO_UCC)
     r.path_release = Path(r.dir_ReleaseOutput)
     r.path_move_to = Path(r.dir_MoveTo)
     # paths to files
@@ -404,14 +409,9 @@ def compile_me() -> None:
 
     print_separator_box("COMPILING: " + r.mutatorName)
 
-    ucc: Path = r.path_compile_dir_sys.joinpath("UCC.exe")
-    # check if we have UCC
-    if not ucc.is_file():
-        throw_error(ERROR.NO_UCC)
-
     # start the actual compilation! FINALLY!!!
     try:
-        run([ucc, "make", "ini=" + COMPILATION_CONFIG_NAME, "-EXPORTCACHE"], check=True)
+        run([r.path_ucc, "make", "ini=" + COMPILATION_CONFIG_NAME, "-EXPORTCACHE"], check=True)
     except CalledProcessError as e:
         print(str(e))
         cleanup_files()
