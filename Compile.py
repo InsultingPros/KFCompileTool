@@ -116,6 +116,7 @@ class ERROR(Enum):
     WRONG_DIR_STYLE = 4
     COMPILATION_FAILED = 5
     DUPLICATE_FILES = 6
+    NO_COMPILE_DIR = 7
 
 
 #################################################################################
@@ -259,6 +260,8 @@ def throw_error(err: ERROR) -> NoReturn:
             print(prefix + "Compilation FAILED!")
         case ERROR.DUPLICATE_FILES:
             print(prefix + "Remove duplicates from your `sources` folder!")
+        case ERROR.NO_COMPILE_DIR:
+            print(prefix + "Your `dir_Compile` doesn't exist!")
 
     cleanup_files()
     input("Press any key to close.")
@@ -329,6 +332,8 @@ def init_settings() -> None:
     # paths to dirs
     r.path_source_files = Path(r.dir_Classes)
     r.path_compile_dir = Path(r.dir_Compile)
+    if not r.path_compile_dir.exists():
+        throw_error(ERROR.NO_COMPILE_DIR)
     r.path_compile_dir_sys = r.path_compile_dir.joinpath("System")
     r.path_release = Path(r.dir_ReleaseOutput)
     r.path_move_to = Path(r.dir_MoveTo)
@@ -494,19 +499,22 @@ r: RuntimeVars
 def main() -> None:
     global r
 
-    r = RuntimeVars()
-    # check if we have all configs and everything is fine
-    # then assign global vars
-    init_settings()
-    # useful logs, if you want em
-    print(r)
-    # compile!
-    compile_me()
-    handle_files()
+    try:
+        r = RuntimeVars()
+        # check if we have all configs and everything is fine
+        # then assign global vars
+        init_settings()
+        # useful logs, if you want em
+        print(r)
+        # compile!
+        compile_me()
+        handle_files()
 
-    # exit the script, everything is done
-    input("\nPress any key to continue.\n")
-
+        # exit the script, everything is done
+        input("\nPress any key to continue.\n")
+    except Exception as e:
+        print(str(e))
+        input("\nPress any key to continue.\n")
 
 if __name__ == "__main__":
     main()
