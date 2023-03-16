@@ -1,49 +1,104 @@
+[`CompileSettings.ini`]: CompileSettings.ini
+
 # KF Compile Tool
 
-[`CompileSettings.ini`]: CompileSettings.ini
-[`Compile.py`]: Compile.py
+[![GitHub all releases](https://img.shields.io/github/downloads/InsultingPros/KFCompileTool/total)](https://github.com/InsultingPros/KFCompileTool/releases)
 
-Killing Floor 1 advanced compilation script. Made to replace obsolete [KFCmdlet](https://github.com/InsultingPros/KFCmdlet).
+Killing Floor 1 advanced compilation script. Allows you to save hours of your life, automating many file operations and config editing.
 
-We make use of separate [killingfloor.ini](https://wiki.beyondunreal.com/Legacy:Compiling_With_UCC#Tips) so we don't touch any config of your compile directory. And you can even keep your mods folders in other place, script will auto handle everything and cleanup after execution.
+## Features
 
-## Installation
+- Automates compilation process, while allowing you to keep your sources in a directory unrelated to game/server files.
+- Supports hierarchical project directory structure, instead of keeping all files in one dump.
+- Supports compiling mods that depend on other mods.
+- Automatically copies compiled packages into your server's System directory.
+- Automatically creates compressed files.
+- Automatically generates localization files.
+- Automatically generates release directory that contains all files that are necessary for a public release.
 
-- Drag'n'drop the [`Compile.py`] to any desired directory.
-- Optionally do the same for `CompileSettings`, but if you forget about it, script will create a new one for you.
+## Installation and Setup
 
-## Features and Usage
+Download [files](https://github.com/InsultingPros/KFCompileTool/releases) (put them anywhere, any directory is fine) and edit [`CompileSettings.ini`]:
 
-All settings should be set in [`CompileSettings.ini`].
+**Global section**, fill all directories:
 
-`Global` section, fill **all** directories:
-
-- `dir_Compile`           - it may be your game client or local dedicated server.
-- `dir_MoveTo`            - if you want to automatically move files from client to server, or vice versa.
-- `dir_ReleaseOutput`     - if you want to automatically get *.u, *.ucl, *.uz2 files in a separate place.
-- `dir_Classes`           - if you decide to keep your mod folder away from `dir_Compile`.
-- `mutatorName`           - the mod package name you want to compile. Must have a corresponding section below with same name!
-
-Mods section, you can as many as you want:
-
-- `EditPackages`          - auto adds to EditPackages. Mostly it will be the mod's package name only, but if you have dependencies you can add them all at once separated with comma. Example:
+- **dir_Compile** - path to root directory where actual compilation will take place: it can be either Killing Floor game client with installed SDK or a dedicated server.
 
 ```ini
-[TestMod]
-EditPackages=TestModParent1,TestModParent2,TestMod
+# for this example we compile in our server
+dir_Compile=D:\Games\KF Dedicated Server
 ```
 
-- `bICompileOutsideofKF`  - is your mod folder is outside of `dir_Compile`.
-- `bAltDirectories`       - is your mod's classes sorted in `source` directory and it's subdirectories: [Example repo](https://insultplayers.ru/git/dkanus/Acedia).
-- `bMoveFiles`            - move files from `dir_Compile` to `dir_MoveTo`.
-- `bCreateINT`            - creates localization file.
-- `bMakeRedirect`         - creates *.uz2 files and automatically puts inside `Redirect` folder.
-- `bMakeRelease`          - exports *.u, *.ucl, *.uz2 to `dir_ReleaseOutput`.
+- **dir_MoveTo** - path to root directory of either Killing Floor game client or dedicated server, where compiled files must be moved. If this isn't needed set **bMoveFiles** to false instead.
 
-If you feel lost after this description - check the [`CompileSettings.ini`] (it's as simple as possible) and try to compile. Terminal will warn you about all possible fixes / missed lines.
+```ini
+# and move compiled files to our game client
+dir_MoveTo=D:\Games\SteamLibrary\steamapps\common\KillingFloor
+```
+
+- **dir_ReleaseOutput** - path to directory, where script will prepare all the files necessary for public mod release. If you this isn't needed set **bMakeRelease** to false instead.
+
+```ini
+# any easy to access directory
+dir_ReleaseOutput=D:\ReleaseMutators
+```
+
+- **dir_Classes** - directory with your projects (usually people use same directory as **dir_Compile** for that). For example, if you have two projects *SimpleProject* and *ComplexProject*, it can look something like this:
+
+```ini
+<dir_Classes>
+├── SimpleProject
+│   └── Classes
+│       └── MyMutator.uc
+└── ComplexProject
+    └── Classes
+        ├── MainMutator.uc
+        ├── BaseWeapon.uc
+        ├── CoolWeapon.uc
+        ├── LameWeapon.uc
+        ├── BaseZed.uc
+        ├── UltraClot.uc
+        └── MegaCrawler.uc
+```
+
+- **mutatorName** - name of the mod to compile by default when the script is called. In the above example it would be either *SimpleProject* or *ComplexProject*.
+
+**Mod sections** allow you to describe how to compile each individual mod (compilation of particular is invoked by `python .\Compile.py <mod_name>` command):
+
+- **EditPackages** - your mod's package name. If you have dependencies add them all at once separated with comma:
+
+```ini
+[MyMod]
+EditPackages=MyModParent1,MyModParent2,MyMod
+```
+
+- **bICompileOutsideofKF** - if your mod folder is outside of **dir_Compile**.
+
+> **Warning** if **bICompileOutsideofKF** is set to true, it will wipe the mod folder before and after compilation step in **dir_Compile**. This is intentional, to keep everything clean and separated.
+
+- **bAltDirectories** - Set this flag to true to use **sources** directory instead of **Classes** to contain your script files. This flag also allows you to use sub-directories to organize your source files:
+
+```ini
+ComplexProject
+└── source
+    ├── MainMutator.uc
+    ├── weapons
+    │   ├── BaseWeapon.uc
+    │   ├── CoolWeapon.uc
+    │   └── LameWeapon.uc
+    └── enemies
+        ├── BaseZed.uc
+        ├── UltraClot.uc
+        └── MegaCrawler.uc
+```
+
+- **bMoveFiles** and bMakeRelease - were described above.
+- **bCreateINT** - set this to *true* to automatically create localization files.
+- **bMakeRedirect** - set this to *true* to automatically compress compiled files.
+
+If you feel lost after this description - check the [`CompileSettings.ini`] (it's as simple as possible) and try to compile something. Terminal will warn you about errors / missed lines.
 
 ## Requirements
 
-- [Python 3.10.x](https://www.python.org/downloads/).
-- OS - Windows. I didn't test this on Linux, MacOS.
-- KF 1 SDK / UCC.exe. Obviously.
+- [Python >3.10.x](https://www.python.org/).
+- OS - Windows.
