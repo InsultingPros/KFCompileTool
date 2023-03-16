@@ -115,6 +115,7 @@ class ERROR(Enum):
     NO_UCC = 3
     WRONG_DIR_STYLE = 4
     COMPILATION_FAILED = 5
+    DUPLICATE_FILES = 6
 
 
 #################################################################################
@@ -256,7 +257,10 @@ def throw_error(err: ERROR) -> NoReturn:
             )
         case ERROR.COMPILATION_FAILED:
             print(prefix + "Compilation FAILED!")
+        case ERROR.DUPLICATE_FILES:
+            print(prefix + "Remove duplicates from your `sources` folder!")
 
+    cleanup_files()
     input("Press any key to close.")
     exit()
 
@@ -373,6 +377,19 @@ def compile_me() -> None:
         path_classes: Path = dir_destination.joinpath("Classes")
         safe_delete_dir(path_classes)
         path_classes.mkdir()
+
+        file_name_list: list[str] = []
+        # quick check for duplicate files (same name)!
+        for file in path_sources.rglob("*.uc"):
+            file_name_list.append(file.name)
+        list_duplicate: list[str] = [
+            item for item in set(file_name_list) if file_name_list.count(item) > 1
+            ]
+
+        if list_duplicate:
+            print(f"Duplicated files {list_duplicate}!")
+            throw_error(ERROR.DUPLICATE_FILES)
+
         # now copy `*.uc` files from `sources` to `classes`, so UCC can process them
         for file in path_sources.rglob("*.uc"):
             try:
