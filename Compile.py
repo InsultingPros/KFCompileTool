@@ -200,8 +200,13 @@ def cleanup_files() -> None:
     safe_delete_file(r.path_garbage_file)
     safe_delete_file(r.path_compilation_ini)
 
+    # remove folder with all sources from compile directory
     if r.bICompileOutsideofKF:
         safe_delete_dir(r.path_compile_dir.joinpath(r.mutatorName))
+
+    # remove classes folder, we use alternative file organization method
+    if r.bAltDirectories:
+        safe_delete_dir(r.path_compile_dir.joinpath(r.mutatorName).joinpath("Classes"))
 
 
 # https://docs.python.org/3/library/shutil.html#rmtree-example
@@ -212,7 +217,7 @@ def remove_readonly(func: Any, path: Any, _: Any) -> None:
 
 
 def safe_delete_dir(input_path: Path) -> None:
-    """remove new created 'classes' folder on alternate dir style"""
+    """safe delete directories"""
     if input_path.exists():
         shutil.rmtree(input_path, onerror=remove_readonly)
 
