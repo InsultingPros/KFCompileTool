@@ -214,15 +214,15 @@ def cleanup_files() -> None:
         safe_delete_dir(r.path_compile_dir.joinpath(r.mutatorName).joinpath("Classes"))
 
 
-# https://docs.python.org/3/library/shutil.html#rmtree-example
-def remove_readonly(func: Any, path: Any, _: Any) -> None:
-    """Clear the readonly bit and reattempt the removal"""
-    Path(path).chmod(0o0200)
-    func(path)
-
-
 def safe_delete_dir(input_path: Path) -> None:
-    """safe delete directories"""
+    """Safe delete directories."""
+
+    # https://docs.python.org/3/library/shutil.html#rmtree-example
+    def remove_readonly(func: Any, path: Any, _: Any) -> None:
+        """Clear the readonly bit and reattempt the removal"""
+        Path(path).chmod(0o0200)
+        func(path)
+
     if input_path.exists():
         shutil.rmtree(input_path, onerror=remove_readonly)
 
