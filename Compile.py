@@ -1,5 +1,5 @@
-# Python version of my shit bat file
-# Author    : NikC-
+# Advanced compilation script for KF1
+# Author    : Shtoyan
 # Home repo : https://github.com/InsultingPros/KFCompileTool
 # License   : https://www.gnu.org/licenses/gpl-3.0.en.html
 
@@ -7,14 +7,13 @@
 #################################################################################
 #                               IMPORTING
 #################################################################################
-import os
 import shutil
-from subprocess import run, CalledProcessError
 import sys
-from dataclasses import dataclass
 from configparser import ConfigParser
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from subprocess import CalledProcessError, check_call
 from typing import Any, Final, NoReturn
 
 #################################################################################
@@ -302,9 +301,7 @@ def init_settings() -> None:
         with open(input_dir, "w") as f:
             f.write(SETTINGS_FILE_CONTENT)
 
-    # self directory
-    path_script: Path = Path(os.path.realpath(__file__))
-    path_settings_ini: Path = path_script.parent.joinpath(SETTINGS_FILE_NAME)
+    path_settings_ini: Path = Path(__file__).parent.joinpath(SETTINGS_FILE_NAME)
     # check if settings.ini exists in same directory
     if not path_settings_ini.is_file():
         create_default_settings_file(path_settings_ini)
@@ -422,9 +419,9 @@ def compile_me() -> None:
 
     # start the actual compilation! FINALLY!!!
     try:
-        run(
-            [r.path_ucc, "make", "ini=" + COMPILATION_CONFIG_NAME, "-EXPORTCACHE"],
-            check=True,
+        check_call(
+            executable=r.path_ucc,
+            args=["ucc", "make", "ini=" + COMPILATION_CONFIG_NAME, "-EXPORTCACHE"],
         )
     except CalledProcessError as e:
         print(str(e))
@@ -433,19 +430,23 @@ def compile_me() -> None:
 
     # create INT files
     if r.bCreateINT:
+        print_separator_box("Creating INT file!")
         try:
-            print_separator_box("Creating INT file!")
-            os.chdir(r.path_compile_dir_sys)
-            run(["ucc", "dumpint", r.path_compiled_file_u], check=True)
+            check_call(
+                executable=r.path_ucc,
+                args=["ucc", "dumpint", r.path_compiled_file_u],
+            )
         except CalledProcessError as e:
             print(str(e))
 
     # create UZ2 files
     if r.bMakeRedirect:
+        print_separator_box("Creating UZ2 file!")
         try:
-            print_separator_box("Creating UZ2 file!")
-            os.chdir(r.path_compile_dir_sys)
-            run(["ucc", "compress", r.path_compiled_file_u], check=True)
+            check_call(
+                executable=r.path_ucc,
+                args=["ucc", "compress", r.path_compiled_file_u],
+            )
         except CalledProcessError as e:
             print(str(e))
 
