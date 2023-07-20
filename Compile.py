@@ -15,22 +15,26 @@ from dataclasses import dataclass
 from configparser import ConfigParser
 from enum import Enum
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, Final, NoReturn
 
 #################################################################################
 #                              'CONSTANTS'
 #################################################################################
-LINE_SEPARATOR: str = "\n######################################################\n"
-SETTINGS_FILE_NAME: str = "CompileSettings.ini"
+LINE_SEPARATOR: Final[
+    str
+] = "\n######################################################\n"
+SETTINGS_FILE_NAME: Final[str] = "CompileSettings.ini"
 """Settings file for this script, contains client-server directories and mods info"""
-COMPILATION_CONFIG_NAME: str = "kfcompile.ini"
+COMPILATION_CONFIG_NAME: Final[str] = "kfcompile.ini"
 """Game config that UCC.exe uses for compilation, contains EditPackages lines and the most minimal setup"""
-REDIRECT_DIR_NAME: str = "Redirect"
+REDIRECT_DIR_NAME: Final[str] = "Redirect"
 """Folder name for redirect files"""
-IGNORE_LIST: list[str] = [".git", "*.md", "Docs", "LICENSE"]
+IGNORE_LIST: Final[list[str]] = [".git", "*.md", "Docs", "LICENSE"]
 """Filter for files-directories, so we copy-paste only source files"""
 
-SETTINGS_FILE_CONTENT: str = r"""[Global]
+SETTINGS_FILE_CONTENT: Final[
+    str
+] = r"""[Global]
 mutatorName=TestMut
 dir_Compile=D:\Games\SteamLibrary\steamapps\common\KillingFloor
 dir_MoveTo=D:\Games\KF Dedicated Server
@@ -47,7 +51,9 @@ bMakeRedirect=False
 bMakeRelease=False
 """
 
-COMPILATION_CONFIG_CONTENT: str = """;= WARNING! This file is generated for compilation and and is meant to be one time use.
+COMPILATION_CONFIG_CONTENT: Final[
+    str
+] = """;= WARNING! This file is generated for compilation and and is meant to be one time use.
 [Engine.Engine]
 EditorEngine=Editor.EditorEngine
 
@@ -399,7 +405,7 @@ def compile_me() -> None:
             file_name_list.append(file.name)
         list_duplicate: list[str] = [
             item for item in set(file_name_list) if file_name_list.count(item) > 1
-            ]
+        ]
 
         if list_duplicate:
             print(f"Duplicated files {list_duplicate}!")
@@ -416,7 +422,10 @@ def compile_me() -> None:
 
     # start the actual compilation! FINALLY!!!
     try:
-        run([r.path_ucc, "make", "ini=" + COMPILATION_CONFIG_NAME, "-EXPORTCACHE"], check=True)
+        run(
+            [r.path_ucc, "make", "ini=" + COMPILATION_CONFIG_NAME, "-EXPORTCACHE"],
+            check=True,
+        )
     except CalledProcessError as e:
         print(str(e))
         cleanup_files()
@@ -520,6 +529,7 @@ def main() -> None:
     except Exception as e:
         print(str(e))
         input("\nPress any key to continue.\n")
+
 
 if __name__ == "__main__":
     main()
