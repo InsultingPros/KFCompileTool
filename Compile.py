@@ -3,34 +3,26 @@
 # Home repo : https://github.com/InsultingPros/KFCompileTool
 # License   : https://www.gnu.org/licenses/gpl-3.0.en.html
 
-
-#################################################################################
-#                               IMPORTING
-#################################################################################
 import shutil
 import sys
 from configparser import ConfigParser
 from dataclasses import dataclass
-from enum import Enum
+from enum import IntEnum, auto
+from logging import DEBUG, Logger, basicConfig, getLogger
 from pathlib import Path
 from subprocess import CalledProcessError, check_call
 from typing import Any, Final, NoReturn
 
-#################################################################################
-#                              'CONSTANTS'
-#################################################################################
 LINE_SEPARATOR: Final[
     str
 ] = "\n######################################################\n"
-SETTINGS_FILE_NAME: Final[str] = "CompileSettings.ini"
-"""Settings file for this script, contains client-server directories and mods info"""
-COMPILATION_CONFIG_NAME: Final[str] = "kfcompile.ini"
-"""Game config that UCC.exe uses for compilation, contains EditPackages lines and the most minimal setup"""
 REDIRECT_DIR_NAME: Final[str] = "Redirect"
 """Folder name for redirect files"""
 IGNORE_LIST: Final[list[str]] = [".git", "*.md", "Docs", "LICENSE"]
 """Filter for files-directories, so we copy-paste only source files"""
 
+SETTINGS_FILE_NAME: Final[str] = "CompileSettings.ini"
+"""Settings file for this script, contains client-server directories and mods info"""
 SETTINGS_FILE_CONTENT: Final[
     str
 ] = r"""[Global]
@@ -50,9 +42,12 @@ bMakeRedirect=False
 bMakeRelease=False
 """
 
+COMPILATION_CONFIG_NAME: Final[str] = "kfcompile.ini"
+"""Game config that UCC.exe uses for compilation.
+Contains EditPackages lines and the most minimal setup"""
 COMPILATION_CONFIG_CONTENT: Final[
     str
-] = """;= WARNING! This file is generated for compilation and and is meant to be one time use.
+] = """;= WARNING! This file is generated for one time compilation!
 [Engine.Engine]
 EditorEngine=Editor.EditorEngine
 
@@ -113,16 +108,21 @@ EditPackages=FrightScript
 """
 
 
-class ERROR(Enum):
-    NO_SETTINGS = 0
-    NO_GLOBAL_SECTION = 1
-    NO_LOCAL_SECTION = 2
-    NO_UCC = 3
-    WRONG_DIR_STYLE = 4
-    COMPILATION_FAILED = 5
-    DUPLICATE_FILES = 6
-    NO_COMPILE_DIR = 7
+class ERROR(IntEnum):
+    NO_SETTINGS = auto()
+    NO_GLOBAL_SECTION = auto()
+    NO_LOCAL_SECTION = auto()
+    NO_UCC = auto()
+    WRONG_DIR_STYLE = auto()
+    COMPILATION_FAILED = auto()
+    DUPLICATE_FILES = auto()
+    NO_COMPILE_DIR = auto()
 
+
+LOG: Logger = getLogger(Path(__file__).stem)
+BASIC_FORMAT = "[%(levelname)s]:[%(filename)s:%(lineno)s - %(funcName)s()] %(message)s"
+basicConfig(format=BASIC_FORMAT)
+LOG.setLevel(DEBUG)
 
 #################################################################################
 #                                UTILITY
@@ -163,8 +163,7 @@ class RuntimeVars:
 
     def __str__(self) -> str:
         return (
-            f"{LINE_SEPARATOR}"
-            f"{SETTINGS_FILE_NAME}\n"
+            f"\n{SETTINGS_FILE_NAME}\n"
             f"mutatorName           = {self.mutatorName}\n"
             f"dir_Compile           = {self.dir_Compile}\n"
             f"dir_MoveTo            = {self.dir_MoveTo}\n"
@@ -194,7 +193,7 @@ def copy_file(source_path: Path, destination_path: Path) -> None:
         return
     try:
         shutil.copy(source_path, destination_path)
-        print("> Copied:  ", source_path, "  --->  ", destination_path)
+        print(f"> Copied:  {source_path}  --->  {destination_path}")
     except Exception as e:
         sys.exit("Failed to copy the file: " + str(e))
 
@@ -229,54 +228,52 @@ def safe_delete_dir(input_path: Path) -> None:
 
 def print_separator_box(msg: str) -> None:
     """Print nice message box"""
-    print(LINE_SEPARATOR, msg, LINE_SEPARATOR)
+    print(f"{LINE_SEPARATOR} {msg} {LINE_SEPARATOR}")
 
 
 def throw_error(err: ERROR) -> NoReturn:
     """Throw human-readable error message."""
-    prefix: str = ">>> TERMINATION WARNING: "
     match err:
         case ERROR.NO_SETTINGS:
-            print(
-                prefix
-                + SETTINGS_FILE_NAME
-                + """ was not found. We created a new file for you, in the same directory.
-                    PLEASE go and edit it to fit your needs."""
+            LOG.error(
+                (
+                    f"'{SETTINGS_FILE_NAME}' was not found."
+                    " We created a new file for you, in the same directory."
+                    " PLEASE go and edit it to fit your needs."
+                )
             )
         case ERROR.NO_GLOBAL_SECTION:
-            print(
-                prefix
-                + """Global section not found in CompileSettings.ini.
-                    PLEASE go and fill it manually"""
+            LOG.error(
+                (
+                    f"`Global` section not found in '{SETTINGS_FILE_NAME}'."
+                    " PLEASE go and fill it manually."
+                )
             )
         case ERROR.NO_LOCAL_SECTION:
-            print(
-                prefix
-                + r.mutatorName
-                + """ section not found in CompileSettings.ini.
-                    PLEASE go and fill it manually"""
+            LOG.error(
+                (
+                    f"'{r.mutatorName}' section not found in '{SETTINGS_FILE_NAME}'."
+                    " PLEASE go and fill it manually."
+                )
             )
         case ERROR.NO_UCC:
-            print(
-                prefix
-                + """UCC.exe was not found in compile directory.
-                    PLEASE Install SDK / check your directories in Global section."""
+            LOG.error(
+                (
+                    f"`UCC.exe` was not found in `{r.path_compile_dir}`."
+                    " Install SDK / check your compile directory in `Global` section."
+                )
             )
         case ERROR.WRONG_DIR_STYLE:
-            print(
-                prefix
-                + "Alternative Directory is True, but `sources` folder NOT FOUND!"
-            )
+            LOG.error("Alternative Directory is True, but `sources` folder NOT FOUND!")
         case ERROR.COMPILATION_FAILED:
-            print(prefix + "Compilation FAILED!")
+            LOG.error("Compilation FAILED!")
         case ERROR.DUPLICATE_FILES:
-            print(prefix + "Remove duplicates from your `sources` folder!")
+            LOG.error("Remove duplicates from your `sources` folder!")
         case ERROR.NO_COMPILE_DIR:
-            print(prefix + "Your `dir_Compile` doesn't exist!")
+            LOG.error(f"Your compile directory (`{r.path_compile_dir}`) doesn't exist!")
 
     cleanup_files()
-    input("Press any key to close.")
-    exit()
+    sys.exit()
 
 
 #################################################################################
@@ -405,7 +402,7 @@ def compile_me() -> None:
         ]
 
         if list_duplicate:
-            print(f"Duplicated files {list_duplicate}!")
+            LOG.error(f"Duplicated files {list_duplicate}!")
             throw_error(ERROR.DUPLICATE_FILES)
 
         # now copy `*.uc` files from `sources` to `classes`, so UCC can process them
@@ -413,7 +410,7 @@ def compile_me() -> None:
             try:
                 shutil.copy2(file, path_classes)
             except Exception as e:
-                print("Failed to copy the file: ", str(e))
+                LOG.error("Failed to copy the file: ", str(e))
 
     print_separator_box("COMPILING: " + r.mutatorName)
 
@@ -424,7 +421,7 @@ def compile_me() -> None:
             args=["ucc", "make", "ini=" + COMPILATION_CONFIG_NAME, "-EXPORTCACHE"],
         )
     except CalledProcessError as e:
-        print(str(e))
+        LOG.error(str(e))
         cleanup_files()
         throw_error(ERROR.COMPILATION_FAILED)
 
@@ -437,7 +434,7 @@ def compile_me() -> None:
                 args=["ucc", "dumpint", r.path_compiled_file_u],
             )
         except CalledProcessError as e:
-            print(str(e))
+            LOG.error(str(e))
 
     # create UZ2 files
     if r.bMakeRedirect:
@@ -448,7 +445,7 @@ def compile_me() -> None:
                 args=["ucc", "compress", r.path_compiled_file_u],
             )
         except CalledProcessError as e:
-            print(str(e))
+            LOG.error(str(e))
 
     # cleanup!
     cleanup_files()
@@ -467,11 +464,11 @@ def handle_files() -> None:
             copy_file(r.path_compiled_file_ucl, destination)
             copy_file(r.path_compiled_file_int, destination)
         except Exception as e:
-            print("Failed to move compiled files: " + str(e))
+            LOG.error("Failed to move compiled files: " + str(e))
 
     if r.bMakeRelease:
         try:
-            print(">>> Moving files to output directory.\n")
+            print(">>> Moving files to output directory.")
             path_release: Path = r.path_release.joinpath(r.mutatorName)
             # cleanup old files at first
             safe_delete_dir(path_release)
@@ -490,7 +487,7 @@ def handle_files() -> None:
                 # copy files
                 copy_file(r.path_compiled_file_uz2, path_redirect)
         except Exception as e:
-            print("Failed to create a redirect file in release folder: " + str(e))
+            LOG.error("Failed to create a redirect file in release folder: " + str(e))
 
     # remove the file from system after everything else is done
     if r.bMakeRedirect:
@@ -501,7 +498,7 @@ def handle_files() -> None:
             )
             safe_delete_file(r.path_compiled_file_uz2)
         except Exception as e:
-            print("Failed to create a redirect file: " + str(e))
+            LOG.error("Failed to create a redirect file: " + str(e))
 
 
 #################################################################################
@@ -524,11 +521,11 @@ def main() -> None:
         # compile!
         compile_me()
         handle_files()
-
-        # exit the script, everything is done
-        input("\nPress any key to continue.\n")
+    except KeyboardInterrupt:
+        LOG.info("Terminated by Ctrl - C")
     except Exception as e:
-        print(str(e))
+        LOG.critical(str(e))
+    finally:
         input("\nPress any key to continue.\n")
 
 
