@@ -3,14 +3,16 @@
 # Home repo : https://github.com/InsultingPros/KFCompileTool
 # License   : https://www.gnu.org/licenses/gpl-3.0.en.html
 
-import shutil
-import sys
 from configparser import ConfigParser
 from dataclasses import dataclass
 from enum import IntEnum, auto
 from logging import DEBUG, Logger, basicConfig, getLogger
 from pathlib import Path
+from shutil import copy, copy2, copytree, ignore_patterns, rmtree
+from stat import S_IREAD, S_IWRITE
 from subprocess import CalledProcessError, check_call
+from sys import argv
+from sys import exit as s_exit
 from typing import Any, Final, NoReturn
 
 LINE_SEPARATOR: Final[
@@ -129,7 +131,7 @@ LOG.setLevel(DEBUG)
 #################################################################################
 
 
-@dataclass
+@dataclass(slots=True)
 class RuntimeVars:
     """Contains 'runtime' variables"""
 
@@ -183,19 +185,20 @@ def safe_delete_file(input_path: Path) -> None:
     """Check and delete the file"""
     if input_path.exists() and input_path.is_file():
         try:
+            input_path.chmod(S_IWRITE)
             input_path.unlink()
         except PermissionError as e:
-            sys.exit("Failed to delete the file: " + str(e))
+            s_exit("Failed to delete the file: " + str(e))
 
 
 def copy_file(source_path: Path, destination_path: Path) -> None:
     if not source_path.is_file():
         return
     try:
-        shutil.copy(source_path, destination_path)
+        copy(source_path, destination_path)
         print(f"> Copied:  {source_path}  --->  {destination_path}")
     except Exception as e:
-        sys.exit("Failed to copy the file: " + str(e))
+        s_exit("Failed to copy the file: " + str(e))
 
 
 # post compilation / failure cleanup
@@ -219,11 +222,11 @@ def safe_delete_dir(input_path: Path) -> None:
     # https://docs.python.org/3/library/shutil.html#rmtree-example
     def remove_readonly(func: Any, path: Any, _: Any) -> None:
         """Clear the readonly bit and reattempt the removal"""
-        Path(path).chmod(0o0200)
+        Path(path).chmod(S_IWRITE)
         func(path)
 
     if input_path.exists():
-        shutil.rmtree(input_path, onerror=remove_readonly)
+        rmtree(input_path, onerror=remove_readonly)
 
 
 def print_separator_box(msg: str) -> None:
@@ -273,7 +276,7 @@ def throw_error(err: ERROR) -> NoReturn:
             LOG.error(f"Your compile directory (`{r.path_compile_dir}`) doesn't exist!")
 
     cleanup_files()
-    sys.exit()
+    s_exit()
 
 
 #################################################################################
@@ -294,6 +297,17 @@ def init_settings() -> None:
             for package in edit_packages_list:
                 f.writelines(f"EditPackages={package}\n")
 
+    def create_steam_appid(destination_path: Path) -> None:
+        """Create `steam_appid.txt` with edited value. So when you compile steam won't
+        notify your friends that you are playing the KF.
+
+        Thanks Alice for the hint!"""
+        if destination_path.exists():
+            destination_path.chmod(S_IWRITE)
+        with open(destination_path, "w") as f:
+            f.write("3")
+        destination_path.chmod(S_IREAD)
+
     def create_default_settings_file(input_dir: Path) -> None:
         with open(input_dir, "w") as f:
             f.write(SETTINGS_FILE_CONTENT)
@@ -312,10 +326,10 @@ def init_settings() -> None:
 
     # GLOBAL
     # accept cmdline arguments
-    if len(sys.argv) == 1:
+    if len(argv) == 1:
         r.mutatorName = config["Global"]["mutatorName"]
     else:
-        r.mutatorName = sys.argv[1]
+        r.mutatorName = argv[1]
 
     r.dir_Compile = config["Global"]["dir_Compile"]
     r.dir_MoveTo = config["Global"]["dir_MoveTo"]
@@ -361,6 +375,7 @@ def init_settings() -> None:
 
     # update editPackages and create the kf.ini
     create_compilation_ini(r.path_compilation_ini, r.EditPackages.split(","))
+    create_steam_appid(r.path_garbage_file)
 
 
 def compile_me() -> None:
@@ -376,11 +391,11 @@ def compile_me() -> None:
     # if mod folder is outside, delete old dir and copy-paste new one
     if r.bICompileOutsideofKF:
         safe_delete_dir(dir_destination)
-        shutil.copytree(
+        copytree(
             dir_source,
             dir_destination,
-            copy_function=shutil.copy,
-            ignore=shutil.ignore_patterns(*IGNORE_LIST),
+            copy_function=copy,
+            ignore=ignore_patterns(*IGNORE_LIST),
         )
 
     # if we use alternative directory style, we need to do some work
@@ -408,7 +423,7 @@ def compile_me() -> None:
         # now copy `*.uc` files from `sources` to `classes`, so UCC can process them
         for file in path_sources.rglob("*.uc"):
             try:
-                shutil.copy2(file, path_classes)
+                copy2(file, path_classes)
             except Exception as e:
                 LOG.error("Failed to copy the file: ", str(e))
 
@@ -422,7 +437,6 @@ def compile_me() -> None:
         )
     except CalledProcessError as e:
         LOG.error(str(e))
-        cleanup_files()
         throw_error(ERROR.COMPILATION_FAILED)
 
     # create INT files
