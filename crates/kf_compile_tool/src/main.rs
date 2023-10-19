@@ -1,7 +1,8 @@
 use kf_compile_tool::constants::exit_codes;
+use kf_compile_tool::utility::create_runtime_vars;
 use kf_compile_tool::{config_helper, ucc_wrapper};
+use std::path::PathBuf;
 use std::{
-    path::PathBuf,
     process::ExitCode,
     time::{Duration, Instant},
 };
@@ -49,9 +50,12 @@ fn main() -> ExitCode {
     let elapsed: Duration = now.elapsed();
     println!("> #4 Elapsed: {:.2?}", elapsed);
 
+    // test
+    let x = create_runtime_vars(global_section, local_section);
+    println!("{:?}", x);
+
     // 5. start compilation
-    let ucc = PathBuf::from(global_section.dir_compile).join("System\\UCC.exe");
-    ucc_wrapper::start_compilation(ucc).unwrap_or_else(|e| {
+    ucc_wrapper::start_compilation(x.compiled_paths.path_ucc).unwrap_or_else(|e| {
         eprintln!("Terminated with error: {}", e);
         std::process::exit(i32::from(exit_codes::ERROR_CANNOT_MAKE));
     });

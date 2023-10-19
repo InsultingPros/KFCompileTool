@@ -2,7 +2,7 @@
 use std::path::PathBuf;
 
 /// `Global` section of config file.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SectionGlobal {
     /// Name of an existing local section.
     pub package_name: String,
@@ -17,7 +17,7 @@ pub struct SectionGlobal {
 }
 
 /// Per mod section of config file.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SectionLocal {
     /// `EditPackages` of this mod.
     ///
@@ -38,19 +38,10 @@ pub struct SectionLocal {
 }
 
 /// All variables that we need during runtime
+#[derive(Debug)]
 pub struct RuntimeVariables {
     /// Mod package name.
     pub mutator_name: String,
-    /// Where are we compiling, home directory.
-    pub dir_compile: PathBuf,
-    /// Where to move files on succesfull compilation.
-    pub dir_move_to: Option<PathBuf>,
-    /// Where to move compiled files.
-    pub dir_release_output: Option<PathBuf>,
-    /// Where are our source files.
-    pub dir_classes: PathBuf,
-    /// `EditPackages` aka parents of this mod.
-    pub edit_packages: Vec<String>,
     /// Source files are somewhere else.
     pub i_compile_outsideof_kf: bool,
     /// Use alternative source file organization.
@@ -64,16 +55,23 @@ pub struct RuntimeVariables {
     /// Create release folder.
     pub make_release: bool,
     // todo
-    pub path_source_files: Option<PathBuf>,
-    pub path_compile_dir: Option<PathBuf>,
-    pub path_ucc: Option<PathBuf>,
-    pub path_compile_dir_sys: Option<PathBuf>,
-    pub path_compiled_file_u: Option<PathBuf>,
-    pub path_compiled_file_ucl: Option<PathBuf>,
-    pub path_compiled_file_uz2: Option<PathBuf>,
-    pub path_compiled_file_int: Option<PathBuf>,
-    pub path_compilation_ini: Option<PathBuf>,
-    pub path_garbage_file: Option<PathBuf>,
-    pub path_release: Option<PathBuf>,
-    pub path_move_to: Option<PathBuf>,
+    pub path_source_files: PathBuf,
+    pub compiled_paths: CompiledPaths,
+    pub copy_path: Option<PathBuf>,
+    pub release_path: Option<PathBuf>,
+}
+
+/// compiled files
+#[derive(Debug)]
+pub struct CompiledPaths {
+    pub path_compile_dir: PathBuf,
+    pub path_compile_system: PathBuf,
+    pub path_compilation_ini: PathBuf,
+    pub path_ucc: PathBuf,
+    pub path_copied_sources: Option<PathBuf>,
+    pub compiled_file_u: PathBuf,
+    pub compiled_file_ucl: PathBuf,
+    pub compiled_file_int: Option<PathBuf>,
+    pub compiled_file_uz2: Option<PathBuf>,
+    pub steam_app_id_hack: PathBuf,
 }
