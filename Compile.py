@@ -27,7 +27,8 @@ SETTINGS_FILE_NAME: Final[str] = "CompileSettings.ini"
 """Settings file for this script, contains client-server directories and mods info"""
 SETTINGS_FILE_CONTENT: Final[
     str
-] = r"""[Global]
+] = r"""; Online Help : https://github.com/InsultingPros/KFCompileTool
+[Global]
 mutatorName=TestMut
 dir_Compile=D:\Games\SteamLibrary\steamapps\common\KillingFloor
 dir_MoveTo=D:\Games\KF Dedicated Server
@@ -35,7 +36,16 @@ dir_ReleaseOutput=C:\Users\USER\Desktop\Mutators
 dir_Classes=C:\Users\USER\Desktop\Projects
 
 [TestMut]
-EditPackages=TestMutParent,TestMut
+EditPackages=TestMut
+bICompileOutsideofKF=False
+bAltDirectories=False
+bMoveFiles=False
+bCreateINT=False
+bMakeRedirect=False
+bMakeRelease=False
+
+[AnotherMutThatDependsOnTestMut]
+EditPackages=TestMut,AnotherMutThatDependsOnTestMut
 bICompileOutsideofKF=False
 bAltDirectories=False
 bMoveFiles=False
