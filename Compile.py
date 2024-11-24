@@ -1,7 +1,9 @@
-# Advanced compilation script for KF1
-# Author    : Shtoyan
-# Home repo : https://github.com/InsultingPros/KFCompileTool
-# License   : https://www.gnu.org/licenses/gpl-3.0.en.html
+"""Advanced compilation script for KF1.
+
+Author    : Shtoyan
+Home repo : https://github.com/InsultingPros/KFCompileTool
+License   : https://www.gnu.org/licenses/gpl-3.0.en.html
+"""
 
 import sys
 from configparser import ConfigParser
@@ -127,6 +129,8 @@ EditPackages=FrightScript
 
 
 class ERROR(IntEnum):
+    """List of Errors."""
+
     NO_SETTINGS = auto()
     NO_GLOBAL_SECTION = auto()
     NO_LOCAL_SECTION = auto()
@@ -149,22 +153,22 @@ LOG.setLevel(DEBUG)
 
 @dataclass(slots=True)
 class RuntimeVars:
-    """Contains 'runtime' variables"""
+    """Contains 'runtime' variables."""
 
     # Global
-    mutatorName: str = "fallback mutatorName"
-    dir_Compile: str = "fallback dir_Compile"
-    dir_MoveTo: str = "fallback dir_MoveTo"
-    dir_ReleaseOutput: str = "fallback dir_ReleaseOutput"
-    dir_Classes: str = "fallback dir_Classes"
+    mutator_name: str = "fallback mutatorName"
+    dir_compile: str = "fallback dir_Compile"
+    dir_move_to: str = "fallback dir_MoveTo"
+    dir_release_output: str = "fallback dir_ReleaseOutput"
+    dir_classes: str = "fallback dir_Classes"
     # sections
-    EditPackages: str = "fallback EditPackages"
-    bICompileOutsideofKF: bool = False
-    bAltDirectories: bool = False
-    bMoveFiles: bool = False
-    bCreateINT: bool = False
-    bMakeRedirect: bool = False
-    bMakeRelease: bool = False
+    edit_packages: str = "fallback EditPackages"
+    b_i_compile_outside_of_kf: bool = False
+    b_alt_directories: bool = False
+    b_move_files: bool = False
+    b_create_localization: bool = False
+    b_make_redirect: bool = False
+    b_make_release: bool = False
     # paths to use
     path_source_files: Path = Path()
     path_compile_dir: Path = Path()
@@ -180,25 +184,26 @@ class RuntimeVars:
     path_move_to: Path = Path()
 
     def __str__(self) -> str:
+        """Format in a prettier way."""
         return (
             f"\n{SETTINGS_FILE_NAME}\n"
-            f"mutatorName           = {self.mutatorName}\n"
-            f"dir_Compile           = {self.dir_Compile}\n"
-            f"dir_MoveTo            = {self.dir_MoveTo}\n"
-            f"dir_ReleaseOutput     = {self.dir_ReleaseOutput}\n"
-            f"dir_Classes           = {self.dir_Classes}\n"
-            f"EditPackages          = {self.EditPackages}\n"
-            f"bICompileOutsideofKF  = {self.bICompileOutsideofKF}\n"
-            f"bAltDirectories       = {self.bAltDirectories}\n"
-            f"bMoveFiles            = {self.bMoveFiles}\n"
-            f"bCreateINT            = {self.bCreateINT}\n"
-            f"bMakeRedirect         = {self.bMakeRedirect}\n"
-            f"bMakeRelease          = {self.bMakeRelease}"
+            f"mutatorName           = {self.mutator_name}\n"
+            f"dir_Compile           = {self.dir_compile}\n"
+            f"dir_MoveTo            = {self.dir_move_to}\n"
+            f"dir_ReleaseOutput     = {self.dir_release_output}\n"
+            f"dir_Classes           = {self.dir_classes}\n"
+            f"EditPackages          = {self.edit_packages}\n"
+            f"bICompileOutsideofKF  = {self.b_i_compile_outside_of_kf}\n"
+            f"bAltDirectories       = {self.b_alt_directories}\n"
+            f"bMoveFiles            = {self.b_move_files}\n"
+            f"bCreateINT            = {self.b_create_localization}\n"
+            f"bMakeRedirect         = {self.b_make_redirect}\n"
+            f"bMakeRelease          = {self.b_make_release}"
         )
 
 
 def safe_delete_file(input_path: Path) -> None:
-    """Check and delete the file"""
+    """Check and delete the file."""
     if input_path.exists() and input_path.is_file():
         try:
             input_path.chmod(S_IWRITE)
@@ -208,6 +213,7 @@ def safe_delete_file(input_path: Path) -> None:
 
 
 def copy_file(source_path: Path, destination_path: Path) -> None:
+    """Yes, just copy a file."""
     if not source_path.is_file():
         return
     try:
@@ -219,17 +225,18 @@ def copy_file(source_path: Path, destination_path: Path) -> None:
 
 # post compilation / failure cleanup
 def cleanup_files() -> None:
+    """Cleanup copied folders and files."""
     # remove garbage-temporary files
     safe_delete_file(r.path_garbage_file)
     safe_delete_file(r.path_compilation_ini)
 
     # remove folder with all sources from compile directory
-    if r.bICompileOutsideofKF:
-        safe_delete_dir(r.path_compile_dir.joinpath(r.mutatorName))
+    if r.b_i_compile_outside_of_kf:
+        safe_delete_dir(r.path_compile_dir.joinpath(r.mutator_name))
 
     # remove classes folder, we use alternative file organization method
-    if r.bAltDirectories:
-        safe_delete_dir(r.path_compile_dir.joinpath(r.mutatorName).joinpath("Classes"))
+    if r.b_alt_directories:
+        safe_delete_dir(r.path_compile_dir.joinpath(r.mutator_name).joinpath("Classes"))
 
 
 def safe_delete_dir(input_path: Path) -> None:
@@ -237,7 +244,7 @@ def safe_delete_dir(input_path: Path) -> None:
 
     # https://docs.python.org/3/library/shutil.html#rmtree-example
     def remove_readonly(func: Any, path: Any, _: Any) -> None:
-        """Clear the readonly bit and reattempt the removal"""
+        """Clear the readonly bit and reattempt the removal."""
         Path(path).chmod(S_IWRITE)
         func(path)
 
@@ -246,7 +253,7 @@ def safe_delete_dir(input_path: Path) -> None:
 
 
 def print_separator_box(msg: str) -> None:
-    """Print nice message box"""
+    """Print nice message box."""
     print(f"{LINE_SEPARATOR} {msg} {LINE_SEPARATOR}")
 
 
@@ -255,32 +262,29 @@ def throw_error(err: ERROR) -> NoReturn:
     match err:
         case ERROR.NO_SETTINGS:
             LOG.error(
-                (
-                    f"'{SETTINGS_FILE_NAME}' was not found."
-                    " We created a new file for you, in the same directory."
-                    " PLEASE go and edit it to fit your needs."
-                )
+                "'%s' was not found."
+                " We created a new file for you, in the same directory."
+                " PLEASE go and edit it to fit your needs.",
+                SETTINGS_FILE_NAME,
             )
         case ERROR.NO_GLOBAL_SECTION:
             LOG.error(
-                (
-                    f"`Global` section not found in '{SETTINGS_FILE_NAME}'."
-                    " PLEASE go and fill it manually."
-                )
+                "`Global` section not found in '%s'."
+                " PLEASE go and fill it manually.",
+                SETTINGS_FILE_NAME,
             )
         case ERROR.NO_LOCAL_SECTION:
             LOG.error(
-                (
-                    f"'{r.mutatorName}' section not found in '{SETTINGS_FILE_NAME}'."
-                    " PLEASE go and fill it manually."
-                )
+                """'%s' section not found in '%d'.\n
+                PLEASE go and fill it manually.""",
+                r.mutator_name,
+                SETTINGS_FILE_NAME,
             )
         case ERROR.NO_UCC:
             LOG.error(
-                (
-                    f"`UCC.exe` was not found in `{r.path_compile_dir}`."
-                    " Install SDK / check your compile directory in `Global` section."
-                )
+                "`UCC.exe` was not found in `%s`."
+                " Install SDK / check your compile directory in `Global` section.",
+                r.path_compile_dir,
             )
         case ERROR.WRONG_DIR_STYLE:
             LOG.error("Alternative Directory is True, but `sources` folder NOT FOUND!")
@@ -289,7 +293,10 @@ def throw_error(err: ERROR) -> NoReturn:
         case ERROR.DUPLICATE_FILES:
             LOG.error("Remove duplicates from your `sources` folder!")
         case ERROR.NO_COMPILE_DIR:
-            LOG.error(f"Your compile directory (`{r.path_compile_dir}`) doesn't exist!")
+            LOG.error(
+                "Your compile directory (`%s`) doesn't exist!",
+                r.path_compile_dir,
+            )
 
     cleanup_files()
     s_exit()
@@ -306,26 +313,27 @@ def init_settings() -> None:
     def create_compilation_ini(
         destination_path: Path, edit_packages_list: list[str]
     ) -> None:
-        """Create DEFAULT config file if none found"""
-        with open(destination_path, "a") as f:
+        """Create DEFAULT config file if none found."""
+        with destination_path.open("a") as f:
             f.write(COMPILATION_CONFIG_CONTENT)
 
             for package in edit_packages_list:
                 f.writelines(f"EditPackages={package}\n")
 
     def create_steam_appid(destination_path: Path) -> None:
-        """Create `steam_appid.txt` with edited value. So when you compile steam won't
-        notify your friends that you are playing the KF.
+        """Create `steam_appid.txt` with edited value.
 
-        Thanks Alice for the hint!"""
+        So when you compile steam won't notify your friends that you are playing the KF.
+        Thanks Alice for the hint!
+        """
         if destination_path.exists():
             destination_path.chmod(S_IWRITE)
-        with open(destination_path, "w") as f:
+        with destination_path.open("w") as f:
             f.write("3")
         destination_path.chmod(S_IREAD)
 
     def create_default_settings_file(input_dir: Path) -> None:
-        with open(input_dir, "w") as f:
+        with input_dir.open("w") as f:
             f.write(SETTINGS_FILE_CONTENT)
 
     path_settings_ini: Path = script_dir.joinpath(SETTINGS_FILE_NAME)
@@ -343,31 +351,33 @@ def init_settings() -> None:
     # GLOBAL
     # accept cmdline arguments
     if len(argv) == 1:
-        r.mutatorName = config["Global"]["mutatorName"]
+        r.mutator_name = config["Global"]["mutatorName"]
     else:
-        r.mutatorName = argv[1]
+        r.mutator_name = argv[1]
 
-    r.dir_Compile = config["Global"]["dir_Compile"]
-    r.dir_MoveTo = config["Global"]["dir_MoveTo"]
-    r.dir_ReleaseOutput = config["Global"]["dir_ReleaseOutput"]
-    r.dir_Classes = config["Global"]["dir_Classes"]
+    r.dir_compile = config["Global"]["dir_Compile"]
+    r.dir_move_to = config["Global"]["dir_MoveTo"]
+    r.dir_release_output = config["Global"]["dir_ReleaseOutput"]
+    r.dir_classes = config["Global"]["dir_Classes"]
 
     # SECTIONS
     # check if exist
-    if not config.has_section(r.mutatorName):
+    if not config.has_section(r.mutator_name):
         throw_error(ERROR.NO_LOCAL_SECTION)
 
-    r.EditPackages = config[r.mutatorName]["EditPackages"]
-    r.bICompileOutsideofKF = config[r.mutatorName].getboolean("bICompileOutsideofKF")
-    r.bAltDirectories = config[r.mutatorName].getboolean("bAltDirectories")
-    r.bMoveFiles = config[r.mutatorName].getboolean("bMoveFiles")
-    r.bCreateINT = config[r.mutatorName].getboolean("bCreateINT")
-    r.bMakeRedirect = config[r.mutatorName].getboolean("bMakeRedirect")
-    r.bMakeRelease = config[r.mutatorName].getboolean("bMakeRelease")
+    r.edit_packages = config[r.mutator_name]["EditPackages"]
+    r.b_i_compile_outside_of_kf = config[r.mutator_name].getboolean(
+        "bICompileOutsideofKF"
+    )
+    r.b_alt_directories = config[r.mutator_name].getboolean("bAltDirectories")
+    r.b_move_files = config[r.mutator_name].getboolean("bMoveFiles")
+    r.b_create_localization = config[r.mutator_name].getboolean("bCreateINT")
+    r.b_make_redirect = config[r.mutator_name].getboolean("bMakeRedirect")
+    r.b_make_release = config[r.mutator_name].getboolean("bMakeRelease")
 
     # paths to dirs
-    r.path_source_files = Path(r.dir_Classes)
-    r.path_compile_dir = Path(r.dir_Compile)
+    r.path_source_files = Path(r.dir_classes)
+    r.path_compile_dir = Path(r.dir_compile)
     if not r.path_compile_dir.exists():
         throw_error(ERROR.NO_COMPILE_DIR)
     r.path_compile_dir_sys = r.path_compile_dir.joinpath("System")
@@ -375,12 +385,12 @@ def init_settings() -> None:
     # check if we have UCC
     if not r.path_ucc.is_file():
         throw_error(ERROR.NO_UCC)
-    r.path_release = Path(r.dir_ReleaseOutput)
-    r.path_move_to = Path(r.dir_MoveTo)
+    r.path_release = Path(r.dir_release_output)
+    r.path_move_to = Path(r.dir_move_to)
     # paths to files
     r.path_garbage_file = r.path_compile_dir_sys.joinpath("steam_appid.txt")
     r.path_compilation_ini = r.path_compile_dir_sys.joinpath(COMPILATION_CONFIG_NAME)
-    path_compiled_file_name: Path = r.path_compile_dir_sys.joinpath(r.mutatorName)
+    path_compiled_file_name: Path = r.path_compile_dir_sys.joinpath(r.mutator_name)
     r.path_compiled_file_u = path_compiled_file_name.with_suffix(".u")
     r.path_compiled_file_ucl = path_compiled_file_name.with_suffix(".ucl")
     r.path_compiled_file_uz2 = path_compiled_file_name.with_suffix(".u.uz2")
@@ -390,7 +400,7 @@ def init_settings() -> None:
     safe_delete_file(r.path_compilation_ini)
 
     # update editPackages and create the kf.ini
-    create_compilation_ini(r.path_compilation_ini, r.EditPackages.split(","))
+    create_compilation_ini(r.path_compilation_ini, r.edit_packages.split(","))
     create_steam_appid(r.path_garbage_file)
 
 
@@ -400,12 +410,12 @@ def compile_me() -> None:
     safe_delete_file(r.path_compiled_file_ucl)
     safe_delete_file(r.path_compiled_file_int)
 
-    dir_source: Path = r.path_source_files.joinpath(r.mutatorName)
-    dir_destination: Path = r.path_compile_dir.joinpath(r.mutatorName)
+    dir_source: Path = r.path_source_files.joinpath(r.mutator_name)
+    dir_destination: Path = r.path_compile_dir.joinpath(r.mutator_name)
     # if our mod files are in other directory, just copy-paste everything from there
 
     # if mod folder is outside, delete old dir and copy-paste new one
-    if r.bICompileOutsideofKF:
+    if r.b_i_compile_outside_of_kf:
         safe_delete_dir(dir_destination)
         copytree(
             dir_source,
@@ -415,7 +425,7 @@ def compile_me() -> None:
         )
 
     # if we use alternative directory style, we need to do some work
-    if r.bAltDirectories:
+    if r.b_alt_directories:
         path_sources: Path = dir_source.joinpath("sources")
         if not path_sources.exists():
             throw_error(ERROR.WRONG_DIR_STYLE)
@@ -440,10 +450,10 @@ def compile_me() -> None:
         for file in path_sources.rglob("*.uc"):
             try:
                 copy2(file, path_classes)
-            except Exception as e:
-                LOG.error("Failed to copy the file: ", str(e))
+            except Exception:
+                LOG.exception("Failed to copy the file: ")
 
-    print_separator_box("COMPILING: " + r.mutatorName)
+    print_separator_box("COMPILING: " + r.mutator_name)
 
     # start the actual compilation! FINALLY!!!
     try:
@@ -451,31 +461,31 @@ def compile_me() -> None:
             executable=r.path_ucc,
             args=["ucc", "make", "ini=" + COMPILATION_CONFIG_NAME, "-EXPORTCACHE"],
         )
-    except CalledProcessError as e:
-        LOG.error(str(e))
+    except CalledProcessError:
+        LOG.exception("Could not exec the ucc!")
         throw_error(ERROR.COMPILATION_FAILED)
 
     # create INT files
-    if r.bCreateINT:
+    if r.b_create_localization:
         print_separator_box("Creating INT file!")
         try:
             check_call(
                 executable=r.path_ucc,
                 args=["ucc", "dumpint", r.path_compiled_file_u],
             )
-        except CalledProcessError as e:
-            LOG.error(str(e))
+        except CalledProcessError:
+            LOG.exception("Could not exec the ucc!")
 
     # create UZ2 files
-    if r.bMakeRedirect:
+    if r.b_make_redirect:
         print_separator_box("Creating UZ2 file!")
         try:
             check_call(
                 executable=r.path_ucc,
                 args=["ucc", "compress", r.path_compiled_file_u],
             )
-        except CalledProcessError as e:
-            LOG.error(str(e))
+        except CalledProcessError:
+            LOG.exception("Could not exec the ucc!")
 
     # cleanup!
     cleanup_files()
@@ -486,20 +496,20 @@ def handle_files() -> None:
     print_separator_box("MOVING FILES")
 
     # do we want files being moved to desired client / server directory?
-    if r.bMoveFiles:
+    if r.b_move_files:
         try:
             print(">>> Moving files to CLIENT directory.\n")
             destination: Path = r.path_move_to.joinpath("System")
             copy_file(r.path_compiled_file_u, destination)
             copy_file(r.path_compiled_file_ucl, destination)
             copy_file(r.path_compiled_file_int, destination)
-        except Exception as e:
-            LOG.error("Failed to move compiled files: " + str(e))
+        except Exception:
+            LOG.exception("Failed to move compiled files")
 
-    if r.bMakeRelease:
+    if r.b_make_release:
         try:
             print(">>> Moving files to output directory.")
-            path_release: Path = r.path_release.joinpath(r.mutatorName)
+            path_release: Path = r.path_release.joinpath(r.mutator_name)
             # cleanup old files at first
             safe_delete_dir(path_release)
             # if 'Redirect' folder doesn't exist, create it
@@ -510,25 +520,25 @@ def handle_files() -> None:
             copy_file(r.path_compiled_file_ucl, path_release)
             copy_file(r.path_compiled_file_int, path_release)
 
-            if r.bMakeRedirect:
+            if r.b_make_redirect:
                 path_redirect: Path = path_release.joinpath(REDIRECT_DIR_NAME)
                 if not path_redirect.exists():
                     path_redirect.mkdir()
                 # copy files
                 copy_file(r.path_compiled_file_uz2, path_redirect)
-        except Exception as e:
-            LOG.error("Failed to create a redirect file in release folder: " + str(e))
+        except Exception:
+            LOG.exception("Failed to create a redirect file in release folder:")
 
     # remove the file from system after everything else is done
-    if r.bMakeRedirect:
+    if r.b_make_redirect:
         try:
             print("\n>>> Moving redirect file to redirect directory.\n")
             copy_file(
                 r.path_compiled_file_uz2, r.path_compile_dir.joinpath(REDIRECT_DIR_NAME)
             )
             safe_delete_file(r.path_compiled_file_uz2)
-        except Exception as e:
-            LOG.error("Failed to create a redirect file: " + str(e))
+        except Exception:
+            LOG.exception("Failed to create a redirect file: ")
 
 
 #################################################################################
@@ -539,6 +549,7 @@ r: RuntimeVars
 
 
 def main() -> None:
+    """Entry point."""
     global r
 
     try:
@@ -553,8 +564,8 @@ def main() -> None:
         handle_files()
     except KeyboardInterrupt:
         LOG.info("Terminated by Ctrl - C")
-    except Exception as e:
-        LOG.critical(str(e))
+    except Exception:
+        LOG.exception("Something very wrong just happened.")
     finally:
         input("\nPress any key to continue.\n")
 
