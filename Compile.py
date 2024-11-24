@@ -3,6 +3,7 @@
 # Home repo : https://github.com/InsultingPros/KFCompileTool
 # License   : https://www.gnu.org/licenses/gpl-3.0.en.html
 
+import sys
 from configparser import ConfigParser
 from dataclasses import dataclass
 from enum import IntEnum, auto
@@ -15,9 +16,14 @@ from sys import argv
 from sys import exit as s_exit
 from typing import Any, Final, NoReturn
 
-LINE_SEPARATOR: Final[
-    str
-] = "\n######################################################\n"
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    script_dir = Path(sys.executable).parent
+else:
+    script_dir = Path(__file__).parent
+
+LINE_SEPARATOR: Final[str] = (
+    "\n######################################################\n"
+)
 REDIRECT_DIR_NAME: Final[str] = "Redirect"
 """Folder name for redirect files"""
 IGNORE_LIST: Final[list[str]] = [".git", "*.md", "Docs", "LICENSE"]
@@ -322,7 +328,7 @@ def init_settings() -> None:
         with open(input_dir, "w") as f:
             f.write(SETTINGS_FILE_CONTENT)
 
-    path_settings_ini: Path = Path(__file__).parent.joinpath(SETTINGS_FILE_NAME)
+    path_settings_ini: Path = script_dir.joinpath(SETTINGS_FILE_NAME)
     # check if settings.ini exists in same directory
     if not path_settings_ini.is_file():
         create_default_settings_file(path_settings_ini)
