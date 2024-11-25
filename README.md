@@ -1,8 +1,10 @@
-[`CompileSettings.ini`]: CompileSettings.ini
-
 # KF Compile Tool
 
-[![GitHub all releases](https://img.shields.io/github/downloads/InsultingPros/KFCompileTool/total)](https://github.com/InsultingPros/KFCompileTool/releases)
+[`CompileSettings.ini`]: CompileSettings.ini
+[release_badge]: <https://img.shields.io/github/downloads/InsultingPros/KFCompileTool/total?style=for-the-badge>
+[build_badge]: https://img.shields.io/github/actions/workflow/status/InsultingPros/KFCompileTool/build.yml?style=for-the-badge
+
+[![build_badge]](https://github.com/InsultingPros/KFCompileTool/actions/workflows/publish.yml) [![release_badge]](https://github.com/InsultingPros/KFCompileTool/releases)
 
 Killing Floor 1 advanced compilation script. Allows you to save hours of your life, automating many file operations and config editing.
 
@@ -18,39 +20,50 @@ Killing Floor 1 advanced compilation script. Allows you to save hours of your li
 
 ## Installation and Setup
 
-Download [files](https://github.com/InsultingPros/KFCompileTool/releases) (put them anywhere, any directory is fine) and edit [`CompileSettings.ini`]:
+0. If you have [Python >3.10.x](https://www.python.org/) installed - clone the repository / get the `Compile.py` script.
+1. If you don't know what Python is - grab the compiled exe from latest [release](https://github.com/InsultingPros/KFCompileTool/releases).
+2. Put them whenever you want.
+3. Start editing [`CompileSettings.ini`]. If you forget it - the default one will be created on first run.
 
-**Global section**, fill all directories:
+### Global Section
 
-- **dir_Compile** - path to root directory where actual compilation will take place: it can be either Killing Floor game client with installed SDK or a dedicated server.
+You need to fill all directories:
+
+- **dir_Compile** - path to root directory where actual compilation will take place: it can be either Killing Floor game client with installed SDK or a dedicated server (aka has an `UCC.exe`).
 
 ```ini
 # for this example we compile in our server
 dir_Compile=D:\Games\KF Dedicated Server
 ```
 
-- **dir_MoveTo** - path to root directory of either Killing Floor game client or dedicated server, where compiled files must be moved. If this isn't needed set **bMoveFiles** to false instead.
+- **dir_MoveTo** - path to root directory of either Killing Floor game client or dedicated server, where compiled files must be moved. This is purely optional and if this isn't needed - leave mod's **bMoveFiles** to `False`.
 
 ```ini
 # and move compiled files to our game client
 dir_MoveTo=D:\Games\SteamLibrary\steamapps\common\KillingFloor
 ```
 
-- **dir_ReleaseOutput** - path to directory, where script will prepare all the files necessary for public mod release. If you this isn't needed set **bMakeRelease** to false instead.
+> [!NOTE]
+> If you choose your outpur directory where your windows user has no rights to write, `Desktop` for example - you need to create that folder manually.
+
+- **dir_ReleaseOutput** - path to directory, where script will prepare all the files necessary (`.u`, `.ucl`, `.int`, `.uz2`) for public mod release. If you this isn't needed set **bMakeRelease** to `False` instead.
 
 ```ini
 # any easy to access directory
 dir_ReleaseOutput=D:\ReleaseMutators
 ```
 
-- **dir_Classes** - directory with your projects (usually people use same directory as **dir_Compile** for that). For example, if you have two projects *SimpleProject* and *ComplexProject*, it can look something like this:
+> [!TIP]
+> Usually people use same directory as **dir_Compile** for that aka game / server folder. But if you want, you can move your mod sources to any directory.
+
+- **dir_Classes** - directory with your projects. For example, if you have two projects *SimpleProject* and *ComplexProject*, it can look something like this:
 
 ```ini
 <dir_Classes>
-├── SimpleProject
+├── MyShinyPreciousMutator
 │   └── Classes
 │       └── MyMutator.uc
-└── ComplexProject
+└── YetAnotherPotatoMutator
     └── Classes
         ├── MainMutator.uc
         ├── BaseWeapon.uc
@@ -61,26 +74,35 @@ dir_ReleaseOutput=D:\ReleaseMutators
         └── MegaCrawler.uc
 ```
 
-- **mutatorName** - name of the mod to compile by default when the script is called. In the above example it would be either *SimpleProject* or *ComplexProject*.
+- **mutatorName** - name of the mod to compile, when the script is called. In the above example it would be either *MyShinyPreciousMutator* or *YetAnotherPotatoMutator*. Or you can pass the mod name as a commandline argument to script / exe:
 
-**Mod sections** allow you to describe how to compile each individual mod (compilation of particular is invoked by `python .\Compile.py <mod_name>` command):
+```bash
+# script
+python Compile.py YetAnotherPotatoMutator
+# exe
+.\kf_compile_tool.exe MyShinyPreciousMutator
+```
+
+### Mod Sections
+
+Allows you to describe how to compile each individual mod.
 
 - **EditPackages** - your mod's package name. If you have dependencies add them all at once separated with comma:
 
 ```ini
-[MyMod]
 EditPackages=MyModParent1,MyModParent2,MyMod
 ```
 
-- **bICompileOutsideofKF** - if your mod folder is outside of **dir_Compile**.
+> [!CAUTION]
+> If **bICompileOutsideofKF** is set to true, it will wipe the mod folder before and after compilation step in **dir_Compile**. This is intentional, to keep everything clean and separated.
 
-> **Warning** if **bICompileOutsideofKF** is set to true, it will wipe the mod folder before and after compilation step in **dir_Compile**. This is intentional, to keep everything clean and separated.
+- **bICompileOutsideofKF** - if your mod folder **dir_Classes** doesn't match **dir_Compile** - set to `True`.
 
-- **bAltDirectories** - Set this flag to true to use **sources** directory instead of **Classes** to contain your script files. This flag also allows you to use sub-directories to organize your source files:
+- **bAltDirectories** - Set this flag to true to use alternative directory style for your source files. Create **sources** directory instead of **Classes** to contain your script files. And you can also add as many sub-directories as you want, to organize your files:
 
-```ini
+```txt
 ComplexProject
-└── source
+└── sources
     ├── MainMutator.uc
     ├── weapons
     │   ├── BaseWeapon.uc
@@ -92,13 +114,13 @@ ComplexProject
         └── MegaCrawler.uc
 ```
 
-- **bMoveFiles** and bMakeRelease - were described above.
-- **bCreateINT** - set this to *true* to automatically create localization files.
-- **bMakeRedirect** - set this to *true* to automatically compress compiled files.
+- **bMoveFiles** and **bMakeRelease** - were described above.
+- **bCreateINT** - set this to `True` to automatically create localization files.
+- **bMakeRedirect** - set this to `True` to automatically compress compiled files.
 
 If you feel lost after this description - check the [`CompileSettings.ini`] (it's as simple as possible) and try to compile something. Terminal will warn you about errors / missed lines.
 
 ## Requirements
 
-- [Python >3.10.x](https://www.python.org/).
-- OS - Windows.
+- 5 minutes of your time.
+- Windows OS.
