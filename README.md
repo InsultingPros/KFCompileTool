@@ -1,6 +1,7 @@
 # KF Compile Tool
 
-[`CompileSettings.ini`]: CompileSettings.ini
+[`kf_compile_tool.ini`]: kf_compile_tool.ini
+[`kf_compile_tool.py`]: kf_compile_tool.py
 [release_badge]: <https://img.shields.io/github/downloads/InsultingPros/KFCompileTool/total?style=for-the-badge>
 [build_badge]: https://img.shields.io/github/actions/workflow/status/InsultingPros/KFCompileTool/build.yml?style=for-the-badge
 
@@ -20,10 +21,10 @@ Killing Floor 1 advanced compilation script. Allows you to save hours of your li
 
 ## Installation and Setup
 
-0. If you have [Python >3.10.x](https://www.python.org/) installed - clone the repository / get the `Compile.py` script.
+0. If you have [Python >3.10.x](https://www.python.org/) installed - clone the repository / get the [`kf_compile_tool.py`].
 1. If you don't know what Python is - grab the compiled exe from latest [release](https://github.com/InsultingPros/KFCompileTool/releases).
 2. Put them whenever you want.
-3. Start editing [`CompileSettings.ini`]. If you forget it - the default one will be created on first run.
+3. Start editing [`kf_compile_tool.ini`]. If you forget it - the default one will be created on first run.
 
 ### Global Section
 
@@ -118,7 +119,7 @@ ComplexProject
 - **bCreateINT** - set this to `True` to automatically create localization files.
 - **bMakeRedirect** - set this to `True` to automatically compress compiled files.
 
-If you feel lost after this description - check the [`CompileSettings.ini`] (it's as simple as possible) and try to compile something. Terminal will warn you about errors / missed lines.
+If you feel lost after this description - check the [`kf_compile_tool.ini`] (it's as simple as possible) and try to compile something. Terminal will warn you about errors / missed lines.
 
 ## Requirements
 
