@@ -26,7 +26,7 @@ jobs:
 
     - name: Build executable
       run: |
-        pyinstaller --onefile Compile.py --name kf_compile_tool
+        pyinstaller --onefile kf_compile_tool.py
 
     - name: Upload Release Asset
       if: github.event_name == 'release'

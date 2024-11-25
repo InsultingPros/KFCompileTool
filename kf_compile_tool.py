@@ -31,7 +31,7 @@ REDIRECT_DIR_NAME: Final[str] = "Redirect"
 IGNORE_LIST: Final[list[str]] = [".git", "*.md", "Docs", "LICENSE"]
 """Filter for files-directories, so we copy-paste only source files"""
 
-SETTINGS_FILE_NAME: Final[str] = "CompileSettings.ini"
+SETTINGS_FILE_NAME: Final[str] = "kf_compile_tool.ini"
 """Settings file for this script, contains client-server directories and mods info"""
 SETTINGS_FILE_CONTENT: Final[
     str
