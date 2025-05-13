@@ -1,8 +1,7 @@
-use crate::{CompileToolErrors, RuntimeVariables};
+use crate::{CompileToolErrors, RuntimeVariables, utility::copy_file_if_exists};
 use std::{
     fs,
     io::{Error, ErrorKind},
-    path::{Path, PathBuf},
 };
 use zip::{CompressionMethod, write::SimpleFileOptions};
 use zip_extensions::zip_create_from_directory_with_options;
@@ -96,20 +95,6 @@ pub fn compose_release_folder(runtime_vars: &RuntimeVariables) -> Result<(), Com
             &runtime_vars.compiled_paths.path_package_uz2,
             &redirect.join(&runtime_vars.compiled_paths.name_package_uz2),
         )?;
-    }
-
-    Ok(())
-}
-
-/// _
-/// # Errors
-/// _
-pub fn copy_file_if_exists(source: &PathBuf, destination: &Path) -> Result<(), CompileToolErrors> {
-    if source.exists() {
-        fs::copy(source, destination)?;
-        println!("Copied {source:#?}!");
-    } else {
-        println!("Failed to copy {source:#?}!");
     }
 
     Ok(())

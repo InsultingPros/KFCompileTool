@@ -1,4 +1,5 @@
-use kfct_lib::{
+use kf_compile_tool::cli::MyOptions;
+use kf_compile_tool::{
     CompileToolErrors, RuntimeVariables,
     config_manager::{
         app_config::parse_app_config, kf_config::create_kf_config,
@@ -24,7 +25,7 @@ fn run(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
     );
 
     // _
-    match kfct_lib::pre_handle_files::run(runtime_vars) {
+    match kf_compile_tool::pre_handle_files::run(runtime_vars) {
         Ok(()) => {}
         // if an error happens, than we can't even cleanup at this stage
         // better exit early so we won't remove source files by accident
@@ -86,7 +87,7 @@ fn run(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
     );
 
     // _
-    kfct_lib::post_handle_files::run(runtime_vars)?;
+    kf_compile_tool::post_handle_files::run(runtime_vars)?;
     counter += 1;
     println!(
         "> #{} Handle all files AFTER compilation. Elapsed: {:.2?}",
@@ -108,7 +109,8 @@ fn run(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
 
 #[cfg(target_os = "windows")]
 fn main() -> ExitCode {
-    let runtime_vars: RuntimeVariables = match parse_app_config() {
+    let env_arguments: MyOptions = gumdrop::Options::parse_args_default_or_exit();
+    let runtime_vars: RuntimeVariables = match parse_app_config(&env_arguments) {
         Ok(result) => result,
         Err(e) => {
             eprintln!("Terminated with error: {e}");

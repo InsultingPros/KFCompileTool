@@ -1,3 +1,4 @@
+use crate::cli::MyOptions;
 use crate::{CompileToolErrors, RuntimeVariables};
 use configparser::ini::Ini;
 use std::fs;
@@ -28,23 +29,23 @@ pub const APP_CONFIG_NAME: &str = "kf_compile_tool.ini";
 
 /// `Global` section of config file.
 #[derive(Debug)]
-pub struct SectionGlobal {
+pub struct GlobalSection {
     /// Name of an existing local section.
     pub package_name: String,
-    /// Directory of our sources
-    pub dir_classes: String,
     /// Where we are compiling on.
-    pub dir_compile: String,
+    pub dir_compiler: String,
     /// Move files to here after successful compilation.
-    pub dir_move_to: Option<String>,
+    pub dir_copy_to: Option<String>,
     /// Release folder.
     pub dir_release_output: Option<String>,
+    /// Directory of our sources
+    pub dir_source_files: String,
 }
 
 /// Per mod section of config file.
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug)]
-pub struct SectionLocal {
+pub struct ModSection {
     /// `EditPackages` of this mod.
     ///
     /// **This is not a list!** Separate dependencies by comma.
@@ -66,7 +67,7 @@ pub struct SectionLocal {
 /// _
 /// # Errors
 /// _
-pub fn parse_app_config() -> Result<RuntimeVariables, CompileToolErrors> {
+pub fn parse_app_config(env_arguments: &MyOptions) -> Result<RuntimeVariables, CompileToolErrors> {
     // Check if our settings file exists in the same directory.
     // If not - create a default one and warn the user.
     if !Path::new(APP_CONFIG_NAME).exists() {
@@ -77,14 +78,17 @@ pub fn parse_app_config() -> Result<RuntimeVariables, CompileToolErrors> {
     }
 
     let mut my_config: Ini = Ini::new();
-    let result_global: SectionGlobal;
-    let result_local: SectionLocal;
+    let result_global: GlobalSection;
+    let result_local: ModSection;
 
     match my_config.load(APP_CONFIG_NAME) {
         Ok(_) => {
             result_global = get_global_section(&my_config)?;
-            result_local = get_local_section(&my_config, &result_global.package_name)?;
-            // dbg!(&result_global, &result_local);
+            if env_arguments.mod_name.is_empty() {
+                result_local = get_local_section(&my_config, &result_global.package_name)?;
+            } else {
+                result_local = get_local_section(&my_config, &env_arguments.mod_name[0])?;
+            }
         }
         Err(e) => {
             return Err(CompileToolErrors::StringErrors(format!(
@@ -100,7 +104,7 @@ pub fn parse_app_config() -> Result<RuntimeVariables, CompileToolErrors> {
 /// _
 /// # Errors
 /// _
-pub fn get_global_section(app_config: &Ini) -> Result<SectionGlobal, CompileToolErrors> {
+pub fn get_global_section(app_config: &Ini) -> Result<GlobalSection, CompileToolErrors> {
     // check if we even have the section
     let sections = app_config.sections();
     // dbg!(&sections);
@@ -126,11 +130,11 @@ pub fn get_global_section(app_config: &Ini) -> Result<SectionGlobal, CompileTool
         ));
     };
 
-    let result: SectionGlobal = SectionGlobal {
+    let result: GlobalSection = GlobalSection {
         package_name,
-        dir_compile,
-        dir_classes,
-        dir_move_to: app_config.get(GLOBAL_SECTION_NAME, "dir_MoveTo"),
+        dir_compiler: dir_compile,
+        dir_source_files: dir_classes,
+        dir_copy_to: app_config.get(GLOBAL_SECTION_NAME, "dir_MoveTo"),
         dir_release_output: app_config.get(GLOBAL_SECTION_NAME, "dir_ReleaseOutput"),
     };
 
@@ -144,7 +148,13 @@ pub fn get_global_section(app_config: &Ini) -> Result<SectionGlobal, CompileTool
 pub fn get_local_section(
     app_config: &Ini,
     package_name: &str,
-) -> Result<SectionLocal, CompileToolErrors> {
+) -> Result<ModSection, CompileToolErrors> {
+    if !app_config.sections().contains(&package_name.to_lowercase()) {
+        return Err(CompileToolErrors::StringErrors(format!(
+            "Section named `{package_name}` not found in {APP_CONFIG_NAME}, aborting!"
+        )));
+    }
+
     // this one is important, handle it
     let Some(edit_packages) = app_config.get(package_name, "EditPackages") else {
         return Err(CompileToolErrors::StringErrors(format!(
@@ -152,7 +162,7 @@ pub fn get_local_section(
         )));
     };
 
-    let result: SectionLocal = SectionLocal {
+    let result: ModSection = ModSection {
         edit_packages,
         compile_outsideof_kf: app_config
             .getbool(package_name, "bICompileOutsideofKF")

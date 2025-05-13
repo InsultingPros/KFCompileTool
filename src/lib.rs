@@ -1,11 +1,12 @@
 use crate::config_manager::kf_config::COMPILATION_CONFIG_NAME;
 use crate::config_manager::steam_appid::STEAM_APPID_TXT;
-use config_manager::app_config::{SectionGlobal, SectionLocal};
+use config_manager::app_config::{GlobalSection, ModSection};
 use std::{
     path::{PathBuf, StripPrefixError},
     rc::Rc,
 };
 
+pub mod cli;
 pub mod config_manager;
 pub mod post_handle_files;
 pub mod pre_handle_files;
@@ -47,11 +48,11 @@ pub struct RuntimeVariables {
 }
 
 impl RuntimeVariables {
-    fn new(global_section: &SectionGlobal, local_section: &SectionLocal) -> Self {
+    fn new(global_section: &GlobalSection, local_section: &ModSection) -> Self {
         Self {
             compile_options: CompileOptions::new(global_section, local_section),
             compiled_paths: CompilationPaths::new(global_section),
-            path_where_to_copy: global_section.dir_move_to.clone().map(PathBuf::from),
+            path_where_to_copy: global_section.dir_copy_to.clone().map(PathBuf::from),
             release_options: ReleaseOptions::new(global_section),
         }
     }
@@ -79,7 +80,7 @@ pub struct CompileOptions {
 }
 
 impl CompileOptions {
-    fn new(global_section: &SectionGlobal, local_section: &SectionLocal) -> Self {
+    fn new(global_section: &GlobalSection, local_section: &ModSection) -> Self {
         Self {
             package_name: global_section.package_name.clone(),
             edit_packages: Rc::new(
@@ -91,7 +92,7 @@ impl CompileOptions {
             ),
             create_int: local_section.create_int,
             sources_are_somewhere_else: local_section.compile_outsideof_kf,
-            path_source_files: PathBuf::from(&global_section.dir_classes)
+            path_source_files: PathBuf::from(&global_section.dir_source_files)
                 .join(global_section.package_name.clone()),
             alt_directories: local_section.alt_directories,
             copy_default_ini: true,
@@ -115,7 +116,7 @@ pub struct ReleaseOptions {
 }
 
 impl ReleaseOptions {
-    fn new(global_section: &SectionGlobal) -> Option<Self> {
+    fn new(global_section: &GlobalSection) -> Option<Self> {
         global_section
             .dir_release_output
             .as_ref()
@@ -180,8 +181,8 @@ pub struct CompilationPaths {
 }
 
 impl CompilationPaths {
-    fn new(global_section: &SectionGlobal) -> Self {
-        let compile_dir: PathBuf = PathBuf::from(global_section.dir_compile.clone());
+    fn new(global_section: &GlobalSection) -> Self {
+        let compile_dir: PathBuf = PathBuf::from(global_section.dir_compiler.clone());
         let package_name = &global_section.package_name;
 
         Self {
@@ -191,7 +192,7 @@ impl CompilationPaths {
             compile_dir_sources: compile_dir.join(package_name),
 
             ucc_exe: Rc::new(compile_dir.join("System").join("UCC.exe")),
-            sources_path: global_section.dir_move_to.as_ref().map(PathBuf::from),
+            sources_path: global_section.dir_copy_to.as_ref().map(PathBuf::from),
 
             temp_kf_ini: compile_dir.join("System").join(COMPILATION_CONFIG_NAME),
             temp_steam_appid: Rc::new(compile_dir.join(format!("System\\{STEAM_APPID_TXT}"))),

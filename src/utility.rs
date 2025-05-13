@@ -74,3 +74,17 @@ pub fn copy_file(from: &PathBuf, to: &PathBuf) {
         eprintln!("Error while trying to copy {from:?} to {to:?}: {e}");
     }
 }
+
+/// _
+/// # Errors
+/// _
+pub fn copy_file_if_exists(from: &PathBuf, to: &Path) -> Result<(), CompileToolErrors> {
+    if from.exists() {
+        fs::copy(from, to)?;
+        println!("Copied {from:#?}!");
+    } else {
+        println!("Failed to copy {from:#?}!");
+    }
+
+    Ok(())
+}

@@ -1,11 +1,21 @@
-[workspace]
-members = ["crates//kf_compile_tool", "crates//kfct_lib", "crates//tests"]
-resolver = "2"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "kf_compile_tool"
+version = "0.1.0"
+edition = "2024"
 
-[workspace.dependencies]
+[dependencies]
+gumdrop = "0.8.*"
 thiserror = "2.0.*"
+zip = { version = "2.6.*", features = [
+    "deflate-flate2",
+], default-features = false }
+flate2 = { version = "1.*", features = ["zlib-rs"], default-features = false }
+zip-extensions = "0.8.*"
+configparser = "3.*"
+walkdir = "2.*"
 
-[workspace.lints.clippy]
+[lints.clippy]
 all = "warn"
 pedantic = "warn"
 nursery = "warn"
