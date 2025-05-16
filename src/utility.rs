@@ -62,7 +62,11 @@ pub fn copy_directory(source: &PathBuf, destination: &Path) -> Result<(), Compil
 /// _
 pub fn delete_file(file: &PathBuf) {
     if let Err(e) = fs::remove_file(file) {
-        eprintln!("Error while removing previous compilation file {file:?}: {e}");
+        eprintln!(
+            "Error while removing previous compilation file {}: {}",
+            file.display(),
+            e
+        );
     }
 }
 
@@ -71,7 +75,12 @@ pub fn delete_file(file: &PathBuf) {
 /// _
 pub fn copy_file(from: &PathBuf, to: &PathBuf) {
     if let Err(e) = fs::copy(from, to) {
-        eprintln!("Error while trying to copy {from:?} to {to:?}: {e}");
+        eprintln!(
+            "Error while trying to copy {} to {}: {}",
+            from.display(),
+            to.display(),
+            e
+        );
     }
 }
 
@@ -81,9 +90,9 @@ pub fn copy_file(from: &PathBuf, to: &PathBuf) {
 pub fn copy_file_if_exists(from: &PathBuf, to: &Path) -> Result<(), CompileToolErrors> {
     if from.exists() {
         fs::copy(from, to)?;
-        println!("Copied {from:#?}!");
+        println!("Copied {}!", from.display());
     } else {
-        println!("Failed to copy {from:#?}!");
+        println!("Failed to copy {}!", from.display());
     }
 
     Ok(())

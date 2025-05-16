@@ -22,7 +22,7 @@ pub fn ucc_compile(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErr
         .arg("-EXPORTCACHE")
         .spawn()?
         .stdout
-        .ok_or_else(|| Error::new(ErrorKind::Other, "Could not capture standard output."))?;
+        .ok_or_else(|| Error::other("Could not capture standard output."))?;
 
     print_stdout(ucc_exe);
     Ok(())
@@ -45,7 +45,7 @@ pub fn ucc_dumpint(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErr
         .arg(&runtime_vars.compiled_paths.name_package_u)
         .spawn()?
         .stdout
-        .ok_or_else(|| Error::new(ErrorKind::Other, "Could not capture standard output."))?;
+        .ok_or_else(|| Error::other("Could not capture standard output."))?;
 
     print_stdout(ucc_exe);
     Ok(())
@@ -68,7 +68,7 @@ pub fn ucc_compress(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolEr
         .arg(&runtime_vars.compiled_paths.name_package_u)
         .spawn()?
         .stdout
-        .ok_or_else(|| Error::new(ErrorKind::Other, "Could not capture standard output."))?;
+        .ok_or_else(|| Error::other("Could not capture standard output."))?;
 
     print_stdout(ucc_exe);
     Ok(())
@@ -95,8 +95,8 @@ pub fn validate_compile_directory(
         return Err(CompileToolErrors::IOError(Error::new(
             ErrorKind::NotFound,
             format!(
-                "path `{:?}` doesn't exist!",
-                runtime_vars.compiled_paths.compile_dir
+                "path `{}` doesn't exist!",
+                runtime_vars.compiled_paths.compile_dir.display()
             ),
         )));
     }

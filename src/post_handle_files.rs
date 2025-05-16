@@ -42,13 +42,17 @@ pub fn remove_copied_sources(runtime_vars: &RuntimeVariables) -> Result<(), Comp
 pub fn copy_files_to_another_kf(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
     if let Some(kf_dir) = &runtime_vars.path_where_to_copy {
         if !kf_dir.exists() {
-            eprintln!("path_where_to_copy `{kf_dir:?}` doesn't exist. Can't copy any files.");
+            eprintln!(
+                "path_where_to_copy `{}` doesn't exist. Can't copy any files.",
+                kf_dir.display()
+            );
             return Ok(());
         }
         let system = &kf_dir.join("System");
         if !system.exists() {
             eprintln!(
-                "path_where_to_copy `{kf_dir:?}` exists, but there is no `System` folder there. Wrong kf dir? Can't copy any files."
+                "path_where_to_copy `{}` exists, but there is no `System` folder there. Wrong kf dir? Can't copy any files.",
+                kf_dir.display()
             );
             return Ok(());
         }

@@ -26,7 +26,10 @@ pub fn compress_release_folder(runtime_vars: &RuntimeVariables) -> Result<(), Co
     if release_folder.read_dir()?.next().is_none() {
         return Err(CompileToolErrors::IOError(Error::new(
             ErrorKind::NotFound,
-            format!("Release folder `{release_folder:?}` is empty! Aborting zip creation."),
+            format!(
+                "Release folder `{}` is empty! Aborting zip creation.",
+                release_folder.display()
+            ),
         )));
     }
 

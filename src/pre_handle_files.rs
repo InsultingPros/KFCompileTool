@@ -22,7 +22,10 @@ pub fn move_sources_to_compile_dir(
     if !out_sources.try_exists()? {
         return Err(CompileToolErrors::IOError(Error::new(
             ErrorKind::NotFound,
-            format!("Source folder `{out_sources:?}` is empty. Aborting compilation!",),
+            format!(
+                "Source folder `{}` is empty. Aborting compilation!",
+                out_sources.display()
+            ),
         )));
     }
     // warn if people want to use source files from another directory, but the same source folder exists in compile_dir
@@ -32,8 +35,9 @@ pub fn move_sources_to_compile_dir(
         return Err(CompileToolErrors::IOError(Error::new(
             ErrorKind::AlreadyExists,
             format!(
-                "You've set `bICompileOutsideofKF` key in config file, but there is a duplicate {} mod folder in compilation directory {:?}! Decide what folder do you want to use, and edit that config entry.",
-                runtime_vars.compile_options.package_name, runtime_vars.compiled_paths.compile_dir
+                "You've set `bICompileOutsideofKF` key in config file, but there is a duplicate {} mod folder in compilation directory {}! Decide what folder do you want to use, and edit that config entry.",
+                runtime_vars.compile_options.package_name,
+                runtime_vars.compiled_paths.compile_dir.display()
             ),
         )));
     }
@@ -69,8 +73,9 @@ pub fn check_alt_style_feature(runtime_vars: &RuntimeVariables) -> Result<(), Co
         return Err(CompileToolErrors::IOError(Error::new(
             ErrorKind::NotFound,
             format!(
-                "You have `Classes` folder `{classes_folder:?}` in your mod, but you want to compile with `alt_directories` key.\n\
-                Decide which one to leave and edit the app config. Aborting compilation!"
+                "You have `Classes` folder `{}` in your mod, but you want to compile with `alt_directories` key.\n\
+                Decide which one to leave and edit the app config. Aborting compilation!",
+                classes_folder.display()
             ),
         )));
     }
@@ -82,7 +87,10 @@ pub fn check_alt_style_feature(runtime_vars: &RuntimeVariables) -> Result<(), Co
     if !sources_folder.exists() {
         return Err(CompileToolErrors::IOError(Error::new(
             ErrorKind::NotFound,
-            format!("Source folder `{sources_folder:?}` doesn't exist. Aborting compilation!"),
+            format!(
+                "Source folder `{}` doesn't exist. Aborting compilation!",
+                sources_folder.display()
+            ),
         )));
     }
     Ok(())
