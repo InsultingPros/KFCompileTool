@@ -9,6 +9,8 @@ use kf_compile_tool::{
     release_manager::make_release,
     ucc_wrapper,
 };
+use kfuz2_lib::helper::try_to_compress;
+use kfuz2_lib::types::InputArguments;
 use std::{process::ExitCode, time::Instant};
 
 fn run(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
@@ -78,7 +80,15 @@ fn run(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
     );
 
     // _
-    ucc_wrapper::ucc_compress(runtime_vars)?;
+    // ucc_wrapper::ucc_compress(runtime_vars)?;
+    let mut input_arguments = InputArguments {
+        input_path: runtime_vars.compiled_paths.path_package_u.clone(),
+        output_path: runtime_vars.compiled_paths.compile_dir_redirect.clone(),
+        log_level: kfuz2_lib::types::LogLevel::Default,
+        ignore_kf_files: true,
+    };
+    try_to_compress(&mut input_arguments)?;
+
     counter += 1;
     println!(
         "> #{} Create redirect file. Elapsed: {:.2?}",

@@ -144,7 +144,7 @@ pub fn run(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
     // 1. Clean garbage that we've created
     cleanup_leftover_files(runtime_vars)?;
     // 2. Move redirect file to redirect folder
-    move_redirect_file(runtime_vars)?;
+    // move_redirect_file(runtime_vars)?;
     // 3. Move files to another kf dir
     copy_files_to_another_kf(runtime_vars)?;
     Ok(())
