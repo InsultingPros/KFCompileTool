@@ -278,9 +278,9 @@ dependencies = [
 
 [[package]]
 name = "kfuz2_lib"
-version = "1.6.1"
+version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba56574bf993aa1b7519eb6bb6887b490bce68857fc462717dca8f2356ee47d9"
+checksum = "b203d186af41516268a1ebbd0545674d04cf4b900524f89ee486dd32ad84b63b"
 dependencies = [
  "flate2",
  "phf",

@@ -1,7 +1,7 @@
 use crate::config_manager::kf_config::COMPILATION_CONFIG_NAME;
 use crate::config_manager::steam_appid::STEAM_APPID_TXT;
 use config_manager::app_config::{GlobalSection, ModSection};
-use kfuz2_lib::errors::CompressStreamError;
+use kfuz2_lib::errors::UZ2LibErrors;
 use std::{
     path::{PathBuf, StripPrefixError},
     rc::Rc,
@@ -38,7 +38,7 @@ pub enum CompileToolErrors {
     #[error(transparent)]
     PathErrors(#[from] StripPrefixError),
     #[error(transparent)]
-    Uz2LibErrors(#[from] CompressStreamError),
+    Uz2LibErrors(#[from] UZ2LibErrors),
 }
 
 #[derive(Debug, Default)]
