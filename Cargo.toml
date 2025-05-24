@@ -7,8 +7,9 @@ edition = "2024"
 [dependencies]
 gumdrop = "0.8.*"
 thiserror = "2.*"
-zip = { version = "3", features = ["deflate-flate2"], default-features = false }
-flate2 = { version = "1.*", features = ["zlib-rs"], default-features = false }
+zip = { version = "3", features = [
+    "deflate-flate2-zlib-rs",
+], default-features = false }
 zip-extensions = "0.8.*"
 configparser = "3.*"
 walkdir = "2.*"

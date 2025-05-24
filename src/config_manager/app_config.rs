@@ -1,5 +1,5 @@
 use crate::cli::MyOptions;
-use crate::{CompileToolErrors, RuntimeVariables};
+use crate::{RuntimeVariables, errors::CompileToolErrors};
 use configparser::ini::Ini;
 use std::fs;
 use std::path::Path;
@@ -9,9 +9,10 @@ const APP_CONFIG_TEMPLATE: &str = r";= Home repo: https://github.com/InsultingPr
 [Global]
 mutatorName=BitCore
 dir_Compile=D:\Games\KF Dedicated Server
+dir_Classes=D:\Documents\Killing Floor Archive\03. Projects\Mods
+dir_Redirect=D:\Games\KF Dedicated Server\Redirect
 dir_MoveTo=D:\Games\SteamLibrary\steamapps\common\KillingFloor
 dir_ReleaseOutput=C:\Users\Pepe User\Desktop\Mutators
-dir_Classes=D:\Documents\Killing Floor Archive\03. Projects\Mods
 
 [BitCore]
 EditPackages=BitCore
@@ -34,12 +35,14 @@ pub struct GlobalSection {
     pub package_name: String,
     /// Where we are compiling on.
     pub dir_compiler: String,
+    /// Directory of our sources
+    pub dir_source_files: String,
+    /// Redirect location
+    pub dir_redirect: Option<String>,
     /// Move files to here after successful compilation.
     pub dir_copy_to: Option<String>,
     /// Release folder.
     pub dir_release_output: Option<String>,
-    /// Directory of our sources
-    pub dir_source_files: String,
 }
 
 /// Per mod section of config file.
@@ -83,112 +86,132 @@ pub fn parse_app_config(env_arguments: &MyOptions) -> Result<RuntimeVariables, C
 
     match my_config.load(APP_CONFIG_NAME) {
         Ok(_) => {
-            result_global = get_global_section(&my_config)?;
             if env_arguments.mod_name.is_empty() {
+                result_global = get_global_section(&my_config, None)?;
                 result_local = get_local_section(&my_config, &result_global.package_name)?;
             } else {
+                result_global = get_global_section(&my_config, Some(&env_arguments.mod_name[0]))?;
                 result_local = get_local_section(&my_config, &env_arguments.mod_name[0])?;
             }
         }
         Err(e) => {
             return Err(CompileToolErrors::StringErrors(format!(
-                "Still couldn't load {APP_CONFIG_NAME}, error: {e}"
+                "Couldn't load {APP_CONFIG_NAME}, Error: {e}"
             )));
         }
     }
 
-    Ok(RuntimeVariables::new(&result_global, &result_local))
+    let result: RuntimeVariables = RuntimeVariables::new(&result_global, &result_local);
+    // dbg!(&result);
+    Ok(result)
 }
 
-#[inline]
 /// _
 /// # Errors
 /// _
-pub fn get_global_section(app_config: &Ini) -> Result<GlobalSection, CompileToolErrors> {
+pub fn get_global_section(
+    config: &Ini,
+    mod_name: Option<&str>,
+) -> Result<GlobalSection, CompileToolErrors> {
     // check if we even have the section
-    let sections = app_config.sections();
+    let sections: Vec<String> = config.sections();
     // dbg!(&sections);
+    // no sections at all?
+    if sections.is_empty() {
+        return Err(CompileToolErrors::StringErrors(format!(
+            "There are no sections at all in {APP_CONFIG_NAME}! Check your config file"
+        )));
+    }
+    // no [Global]?
     if !sections.contains(&"global".to_string()) {
         return Err(CompileToolErrors::StringErrors(
-            "There is no `[Global]` section in the config!".to_string(),
+            "There is no `[Global]` section in the config! Fix your config file.".to_string(),
         ));
     }
     // these ones are important, handle them
-    let Some(package_name) = app_config.get(GLOBAL_SECTION_NAME, "mutatorName") else {
-        return Err(CompileToolErrors::StringErrors(
-            "'mutatorName' isn't specified in the config, aborting!".to_string(),
-        ));
+    // let package_name: String;
+    let package_name: String = if let Some(name) = mod_name {
+        name.to_string()
+    } else {
+        get_cfg_string("mutatorName", config)?
     };
-    let Some(dir_compile) = app_config.get(GLOBAL_SECTION_NAME, "dir_Compile") else {
-        return Err(CompileToolErrors::StringErrors(
-            "'dir_Compile' path isn't specified in the config, aborting!".to_string(),
-        ));
-    };
-    let Some(dir_classes) = app_config.get(GLOBAL_SECTION_NAME, "dir_Classes") else {
-        return Err(CompileToolErrors::StringErrors(
-            "'dir_Classes' path isn't specified in the config, aborting!".to_string(),
-        ));
-    };
+
+    let dir_compiler = get_cfg_string("dir_Compile", config)?;
+    let dir_source_files = get_cfg_string("dir_Classes", config)?;
+    let dir_copy_to = config.get(GLOBAL_SECTION_NAME, "dir_MoveTo");
+    let dir_release_output = config.get(GLOBAL_SECTION_NAME, "dir_ReleaseOutput");
+    let dir_redirect = config.get(GLOBAL_SECTION_NAME, "dir_Redirect");
 
     let result: GlobalSection = GlobalSection {
         package_name,
-        dir_compiler: dir_compile,
-        dir_source_files: dir_classes,
-        dir_copy_to: app_config.get(GLOBAL_SECTION_NAME, "dir_MoveTo"),
-        dir_release_output: app_config.get(GLOBAL_SECTION_NAME, "dir_ReleaseOutput"),
+        dir_compiler,
+        dir_source_files,
+        dir_redirect,
+        dir_copy_to,
+        dir_release_output,
     };
-
+    // dbg!(&result);
     Ok(result)
 }
 
 #[inline]
+fn get_cfg_string(key: &str, config: &Ini) -> Result<String, CompileToolErrors> {
+    config.get(GLOBAL_SECTION_NAME, key).map_or_else(
+        || {
+            Err(CompileToolErrors::StringErrors(format!(
+                "'{key}' path isn't specified in {APP_CONFIG_NAME}'s `{GLOBAL_SECTION_NAME}` section. Aborting!"
+            )))
+        },
+        Ok,
+    )
+}
+
 /// _
 /// # Errors
 /// _
-pub fn get_local_section(
-    app_config: &Ini,
-    package_name: &str,
-) -> Result<ModSection, CompileToolErrors> {
-    if !app_config.sections().contains(&package_name.to_lowercase()) {
+pub fn get_local_section(config: &Ini, section: &str) -> Result<ModSection, CompileToolErrors> {
+    if !config.sections().contains(&section.to_lowercase()) {
         return Err(CompileToolErrors::StringErrors(format!(
-            "Section named `{package_name}` not found in {APP_CONFIG_NAME}, aborting!"
+            "Section named `{section}` is not found in {APP_CONFIG_NAME}. Aborting!"
         )));
     }
-
     // this one is important, handle it
-    let Some(edit_packages) = app_config.get(package_name, "EditPackages") else {
+    let Some(edit_packages) = config.get(section, "EditPackages") else {
         return Err(CompileToolErrors::StringErrors(format!(
-            "`EditPackages` variable is not found in {APP_CONFIG_NAME} / is empty, aborting!"
+            "Key `EditPackages` is not found (or empty) in {APP_CONFIG_NAME}. Aborting!"
         )));
     };
+    // everything else is optional, we can set `false` on fail
+    let compile_outsideof_kf =
+        get_cfg_bool_unwrap_or_default("bICompileOutsideofKF", section, config);
+    let alt_directories = get_cfg_bool_unwrap_or_default("bAltDirectories", section, config);
+    let move_files = get_cfg_bool_unwrap_or_default("bMoveFiles", section, config);
+    let create_int = get_cfg_bool_unwrap_or_default("bCreateINT", section, config);
+    let make_redirect = get_cfg_bool_unwrap_or_default("bMakeRedirect", section, config);
+    let make_release = get_cfg_bool_unwrap_or_default("bMakeRelease", section, config);
 
     let result: ModSection = ModSection {
         edit_packages,
-        compile_outsideof_kf: app_config
-            .getbool(package_name, "bICompileOutsideofKF")
-            .map_err(CompileToolErrors::StringErrors)?
-            .unwrap_or_default(),
-        alt_directories: app_config
-            .getbool(package_name, "bAltDirectories")
-            .map_err(CompileToolErrors::StringErrors)?
-            .unwrap_or_default(),
-        move_files: app_config
-            .getbool(package_name, "bMoveFiles")
-            .map_err(CompileToolErrors::StringErrors)?
-            .unwrap_or_default(),
-        create_int: app_config
-            .getbool(package_name, "bCreateINT")
-            .map_err(CompileToolErrors::StringErrors)?
-            .unwrap_or_default(),
-        make_redirect: app_config
-            .getbool(package_name, "bMakeRedirect")
-            .map_err(CompileToolErrors::StringErrors)?
-            .unwrap_or_default(),
-        make_release: app_config
-            .getbool(package_name, "bMakeRelease")
-            .map_err(CompileToolErrors::StringErrors)?
-            .unwrap_or_default(),
+        compile_outsideof_kf,
+        alt_directories,
+        move_files,
+        create_int,
+        make_redirect,
+        make_release,
     };
-
+    // dbg!(&result);
     Ok(result)
+}
+
+#[inline]
+fn get_cfg_bool_unwrap_or_default(key: &str, section: &str, config: &Ini) -> bool {
+    if let Ok(Some(result)) = config.getbool(section, key) {
+        return result;
+    }
+    // else there is a missing key in config file, warn the user and return the default
+    println!(
+        "#WARNING: Key `{key}` is not found in {APP_CONFIG_NAME}'s `{section}` section.\n\
+        We set it to false for this run, but it is desirable to fill it explicitely in config file.\n"
+    );
+    false
 }

@@ -1,6 +1,7 @@
 use crate::config_manager::kf_config::COMPILATION_CONFIG_NAME;
-use crate::{CompileToolErrors, RuntimeVariables};
-use std::io::{BufRead, BufReader, Error, ErrorKind};
+use crate::utility::print_fancy_block;
+use crate::{RuntimeVariables, errors::CompileToolErrors};
+use std::io::{BufRead, BufReader, Error};
 use std::process::{ChildStdout, Command, Stdio};
 
 // Reference: https://rust-lang-nursery.github.io/rust-cookbook/os/external.html?highlight=stdout#continuously-process-child-process-outputs
@@ -15,16 +16,35 @@ use std::process::{ChildStdout, Command, Stdio};
 /// Will return `Err` if `filename` does not exist or the user does not have
 /// permission to read it.
 pub fn ucc_compile(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
-    let ucc_exe = Command::new(runtime_vars.compiled_paths.ucc_exe.as_ref())
+    print_fancy_block("Start compilation");
+
+    let mut child = Command::new(runtime_vars.paths.ucc_exe.as_ref())
         .stdout(Stdio::piped())
         .arg("make")
         .arg(format!("ini={COMPILATION_CONFIG_NAME}"))
         .arg("-EXPORTCACHE")
-        .spawn()?
+        .spawn()?;
+
+    // Get stdout before waiting
+    let ucc_exe = child
         .stdout
+        .take()
         .ok_or_else(|| Error::other("Could not capture standard output."))?;
 
     print_stdout(ucc_exe);
+
+    // Wait for the process to complete and get the status
+    let status = child.wait()?;
+
+    if !status.success() {
+        let exit_code = status
+            .code()
+            .map_or_else(|| "terminated by signal".to_string(), |c| c.to_string());
+        return Err(CompileToolErrors::from(Error::other(format!(
+            "UCC compilation failed with exit code: {exit_code}"
+        ))));
+    }
+
     Ok(())
 }
 
@@ -32,22 +52,41 @@ pub fn ucc_compile(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErr
 /// # Errors
 /// _
 pub fn ucc_dumpint(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
-    if !runtime_vars.compile_options.create_int {
+    if !runtime_vars.mod_settings.create_int {
         return Ok(());
     }
 
-    let ucc_exe = Command::new("cmd")
-        .current_dir(runtime_vars.compiled_paths.compile_dir_system.as_path())
+    print_fancy_block("Create localization file");
+
+    let mut child = Command::new("cmd")
+        .current_dir(runtime_vars.paths.compile_dir_system.as_path())
         .stdout(Stdio::piped())
         .arg("/C")
         .arg("UCC.exe")
         .arg("dumpint")
-        .arg(&runtime_vars.compiled_paths.name_package_u)
-        .spawn()?
+        .arg(&runtime_vars.paths.name_package_u)
+        .spawn()?;
+
+    // Get stdout before waiting
+    let ucc_exe = child
         .stdout
+        .take()
         .ok_or_else(|| Error::other("Could not capture standard output."))?;
 
     print_stdout(ucc_exe);
+
+    // Wait for the process to complete and get the status
+    let status = child.wait()?;
+
+    if !status.success() {
+        let exit_code = status
+            .code()
+            .map_or_else(|| "terminated by signal".to_string(), |c| c.to_string());
+        return Err(CompileToolErrors::from(Error::other(format!(
+            "UCC dumpint failed with exit code: {exit_code}"
+        ))));
+    }
+
     Ok(())
 }
 
@@ -59,29 +98,4 @@ pub fn print_stdout(child: ChildStdout) {
         .lines()
         .map_while(Result::ok)
         .for_each(|line| println!("{line}"));
-}
-
-/// # Errors
-///
-/// Will return `Err` if `filename` does not exist or the user does not have
-/// permission to read it.s
-pub fn validate_compile_directory(
-    runtime_vars: &RuntimeVariables,
-) -> Result<bool, CompileToolErrors> {
-    if !runtime_vars.compiled_paths.compile_dir.try_exists()? {
-        return Err(CompileToolErrors::IOError(Error::new(
-            ErrorKind::NotFound,
-            format!(
-                "path `{}` doesn't exist!",
-                runtime_vars.compiled_paths.compile_dir.display()
-            ),
-        )));
-    }
-
-    // dbg!(
-    //     &runtime_vars.compiled_paths.ucc_exe,
-    //     runtime_vars.compiled_paths.ucc_exe.try_exists()?
-    // );
-
-    Ok(true)
 }

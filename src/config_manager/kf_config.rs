@@ -1,4 +1,4 @@
-use crate::{CompileToolErrors, RuntimeVariables};
+use crate::{RuntimeVariables, errors::CompileToolErrors};
 use std::fmt::Write as _;
 
 /// config name
@@ -71,14 +71,14 @@ EditPackages=FrightScript
 pub fn create_kf_config(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
     let mut new_content: String = COMPILATION_CONFIG_TEMPLATE.to_string();
 
-    for package in runtime_vars.compile_options.edit_packages.as_ref() {
+    for package in runtime_vars.mod_settings.edit_packages.as_ref() {
         // dbg!(package);
         writeln!(&mut new_content, "EditPackages={package}")?;
     }
 
     std::fs::write(
         runtime_vars
-            .compiled_paths
+            .paths
             .compile_dir_system
             .join(COMPILATION_CONFIG_NAME),
         &new_content,

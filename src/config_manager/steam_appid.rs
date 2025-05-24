@@ -1,4 +1,4 @@
-use crate::{CompileToolErrors, RuntimeVariables};
+use crate::{RuntimeVariables, errors::CompileToolErrors};
 use std::{
     fs::{self, OpenOptions, Permissions},
     io::Write as _,
@@ -12,7 +12,7 @@ pub const STEAM_APPID_TXT: &str = "steam_appid.txt";
 /// # Errors
 /// _
 pub fn create_hacky_steamappid(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
-    let steam_appid_file: &PathBuf = runtime_vars.compiled_paths.temp_steam_appid.as_ref();
+    let steam_appid_file: &PathBuf = runtime_vars.paths.temp_steam_appid.as_ref();
     // remove the file if it exists
     if steam_appid_file.try_exists()? {
         // Set file attributes to normal (removing read-only)

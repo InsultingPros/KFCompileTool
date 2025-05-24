@@ -1,43 +1,75 @@
-use crate::{CompileToolErrors, RuntimeVariables, utility::copy_file_if_exists};
+use crate::{
+    RuntimeVariables,
+    errors::CompileToolErrors,
+    utility::{copy_file_if_exists, print_fancy_block},
+};
 use std::{
     fs,
     io::{Error, ErrorKind},
+    path::PathBuf,
 };
 use zip::{CompressionMethod, write::SimpleFileOptions};
 use zip_extensions::zip_create_from_directory_with_options;
 
+#[derive(Debug)]
+pub struct ReleaseOptions {
+    /// zip's file name
+    pub zip_name: String,
+    /// the output location
+    pub path_output: PathBuf,
+    /// output folder for this exact mod: "C:\\Users\\Pepe User\\Desktop\\Mutators\\`MY_MOD`"
+    pub path_mod: PathBuf,
+    /// "C:\\Users\\Pepe User\\Desktop\\Mutators\\`MY_MOD`\\System"
+    pub path_system: PathBuf,
+    /// "C:\\Users\\Pepe User\\Desktop\\Mutators\\`MY_MOD`\\Redirect"
+    pub path_redirect: PathBuf,
+}
+
+impl ReleaseOptions {
+    fn new(runtime_vars: &RuntimeVariables) -> Self {
+        let zip_name: String = format!("{}.zip", runtime_vars.mod_settings.package_name);
+        let path_output: PathBuf =
+            PathBuf::from(runtime_vars.paths.output_location.as_ref().unwrap());
+        let path_mod: PathBuf = path_output.join(&runtime_vars.mod_settings.package_name);
+        let path_system: PathBuf = path_mod.join("System");
+        let path_redirect: PathBuf = path_mod.join("Redirect");
+
+        Self {
+            zip_name,
+            path_output,
+            path_mod,
+            path_system,
+            path_redirect,
+        }
+    }
+}
+
 /// _
 /// # Errors
 /// _
 /// # Panics
 /// _
-pub fn compress_release_folder(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
-    let release_folder = &runtime_vars.release_options.as_ref().unwrap().path_mod;
-    let zip_file_name = &runtime_vars.release_options.as_ref().unwrap().zip_name;
-
-    let release_zip = &runtime_vars
-        .release_options
-        .as_ref()
-        .unwrap()
-        .path_root
-        .join(zip_file_name);
-
-    // dbg!(release_folder, release_zip, &zip_file_name);
-    if release_folder.read_dir()?.next().is_none() {
-        return Err(CompileToolErrors::IOError(Error::new(
-            ErrorKind::NotFound,
-            format!(
-                "Release folder `{}` is empty! Aborting zip creation.",
-                release_folder.display()
-            ),
-        )));
+pub fn prepare_release_folders(
+    runtime_vars: &RuntimeVariables,
+    release_options: &ReleaseOptions,
+) -> Result<(), CompileToolErrors> {
+    // Create output directory if none
+    if !release_options.path_output.exists() {
+        fs::create_dir(&release_options.path_output)?;
+    }
+    // if there is a mod folder - clean it up
+    if release_options.path_mod.exists() {
+        fs::remove_dir_all(&release_options.path_mod)?;
+    }
+    // and create it again
+    fs::create_dir(&release_options.path_mod)?;
+    // create the system folder
+    fs::create_dir(&release_options.path_system)?;
+    // and redirect folder, if required
+    if runtime_vars.mod_settings.make_redirect {
+        fs::create_dir(&release_options.path_redirect)?;
     }
 
-    let zip_options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
-    zip_create_from_directory_with_options(release_zip, release_folder, |_| zip_options)?;
-
-    std::fs::copy(release_zip, release_folder.join(zip_file_name))?;
-    std::fs::remove_file(release_zip)?;
     Ok(())
 }
 
@@ -46,57 +78,35 @@ pub fn compress_release_folder(runtime_vars: &RuntimeVariables) -> Result<(), Co
 /// _
 /// # Panics
 /// _
-pub fn prepare_release_folder(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
-    let output_dir = &runtime_vars.release_options.as_ref().unwrap().path_root;
-    if !output_dir.exists() {
-        fs::create_dir(output_dir)?;
-    }
-    // dbg!(output_dir);
-
-    let release_folder = &runtime_vars.release_options.as_ref().unwrap().path_mod;
-    if release_folder.exists() {
-        fs::remove_dir_all(release_folder)?;
-    }
-    // dbg!(&release_folder);
-
-    fs::create_dir(release_folder)?;
-    Ok(())
-}
-
-/// _
-/// # Errors
-/// _
-/// # Panics
-/// _
-pub fn compose_release_folder(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
-    let system = &runtime_vars.release_options.as_ref().unwrap().path_system;
-    if !system.try_exists()? {
-        fs::create_dir(system)?;
-    }
-
+pub fn compose_release(
+    runtime_vars: &RuntimeVariables,
+    release_options: &ReleaseOptions,
+) -> Result<(), CompileToolErrors> {
     // move files
     copy_file_if_exists(
-        &runtime_vars.compiled_paths.path_package_u,
-        &system.join(&runtime_vars.compiled_paths.name_package_u),
+        &runtime_vars.paths.path_package_u,
+        &release_options
+            .path_system
+            .join(&runtime_vars.paths.name_package_u),
     )?;
     copy_file_if_exists(
-        &runtime_vars.compiled_paths.path_package_ucl,
-        &system.join(&runtime_vars.compiled_paths.name_package_ucl),
+        &runtime_vars.paths.path_package_ucl,
+        &release_options
+            .path_system
+            .join(&runtime_vars.paths.name_package_ucl),
     )?;
     copy_file_if_exists(
-        &runtime_vars.compiled_paths.path_package_int,
-        &system.join(&runtime_vars.compiled_paths.name_package_int),
+        &runtime_vars.paths.path_package_int,
+        &release_options
+            .path_system
+            .join(&runtime_vars.paths.name_package_int),
     )?;
-
-    if runtime_vars.compile_options.make_redirect {
-        let redirect = &runtime_vars.release_options.as_ref().unwrap().path_redirect;
-        if !redirect.try_exists()? {
-            fs::create_dir(redirect)?;
-        }
-
+    if runtime_vars.mod_settings.make_redirect {
         copy_file_if_exists(
-            &runtime_vars.compiled_paths.path_package_uz2,
-            &redirect.join(&runtime_vars.compiled_paths.name_package_uz2),
+            &runtime_vars.paths.path_package_uz2,
+            &release_options
+                .path_redirect
+                .join(&runtime_vars.paths.name_package_uz2),
         )?;
     }
 
@@ -108,23 +118,61 @@ pub fn compose_release_folder(runtime_vars: &RuntimeVariables) -> Result<(), Com
 /// _
 /// # Panics
 /// _
+pub fn compress_release_folder(release_options: &ReleaseOptions) -> Result<(), CompileToolErrors> {
+    if release_options.path_mod.read_dir()?.next().is_none() {
+        return Err(CompileToolErrors::IOError(Error::new(
+            ErrorKind::NotFound,
+            format!(
+                "Release folder `{}` is empty! Aborting zip creation.",
+                release_options.path_mod.display()
+            ),
+        )));
+    }
+
+    let zip_options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
+    let tmp_release_zip = &release_options.path_output.join(&release_options.zip_name);
+
+    zip_create_from_directory_with_options(tmp_release_zip, &release_options.path_mod, |_| {
+        zip_options
+    })?;
+
+    std::fs::copy(
+        tmp_release_zip,
+        release_options.path_mod.join(&release_options.zip_name),
+    )?;
+    std::fs::remove_file(tmp_release_zip)?;
+    Ok(())
+}
+
+/// _
+/// # Errors
+/// _
+/// # Panics
+/// _
 pub fn make_release(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
     // make release only if requested
-    if runtime_vars.release_options.is_none() {
+    if !runtime_vars.mod_settings.make_release {
         return Ok(());
     }
-
-    // create / cleanup remnants from older compilations
-    prepare_release_folder(runtime_vars)?;
-    compose_release_folder(runtime_vars)?;
-
-    // compress folder if required
-    if let Some(options) = &runtime_vars.release_options {
-        if options.make_zip {
-            // println!("compressing!");
-            compress_release_folder(runtime_vars)?;
+    if let Some(path) = &runtime_vars.paths.output_location {
+        if !path.exists() {
+            return Err(CompileToolErrors::StringErrors(format!(
+                "You try to make a release for {}, but you didn't specify `dir_ReleaseOutput` variable in config file!",
+                runtime_vars.mod_settings.package_name
+            )));
         }
     }
+
+    print_fancy_block("Create Release");
+    let release_options = &ReleaseOptions::new(runtime_vars);
+    // dbg!(release_options);
+
+    // cleanup remnants from older compilations or make one from sratch
+    prepare_release_folders(runtime_vars, release_options)?;
+    // create the release
+    compose_release(runtime_vars, release_options)?;
+    // compress folder if required
+    compress_release_folder(release_options)?;
 
     Ok(())
 }
