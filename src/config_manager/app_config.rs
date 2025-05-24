@@ -92,7 +92,7 @@ pub fn parse_app_config(env_arguments: &MyOptions) -> Result<RuntimeVariables, C
         }
         Err(e) => {
             return Err(CompileToolErrors::StringErrors(format!(
-                "Still couldn't load {APP_CONFIG_NAME}, error: {e}"
+                "Couldn't load {APP_CONFIG_NAME}, Error: {e}"
             )));
         }
     }
@@ -106,11 +106,18 @@ pub fn parse_app_config(env_arguments: &MyOptions) -> Result<RuntimeVariables, C
 /// _
 pub fn get_global_section(app_config: &Ini) -> Result<GlobalSection, CompileToolErrors> {
     // check if we even have the section
-    let sections = app_config.sections();
+    let sections: Vec<String> = app_config.sections();
     // dbg!(&sections);
+    // no sections at all?
+    if sections.is_empty() {
+        return Err(CompileToolErrors::StringErrors(format!(
+            "There are no sections at all in {APP_CONFIG_NAME}! Check your config file"
+        )));
+    }
+    // no [Global]?
     if !sections.contains(&"global".to_string()) {
         return Err(CompileToolErrors::StringErrors(
-            "There is no `[Global]` section in the config!".to_string(),
+            "There is no `[Global]` section in the config! Fix your config file.".to_string(),
         ));
     }
     // these ones are important, handle them
