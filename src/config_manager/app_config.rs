@@ -97,7 +97,8 @@ pub fn parse_app_config(env_arguments: &MyOptions) -> Result<RuntimeVariables, C
         }
     }
 
-    Ok(RuntimeVariables::new(&result_global, &result_local))
+    let result: RuntimeVariables = RuntimeVariables::new(&result_global, &result_local);
+    Ok(result)
 }
 
 #[inline]
@@ -126,12 +127,12 @@ pub fn get_global_section(app_config: &Ini) -> Result<GlobalSection, CompileTool
             "'mutatorName' isn't specified in the config, aborting!".to_string(),
         ));
     };
-    let Some(dir_compile) = app_config.get(GLOBAL_SECTION_NAME, "dir_Compile") else {
+    let Some(dir_compiler) = app_config.get(GLOBAL_SECTION_NAME, "dir_Compile") else {
         return Err(CompileToolErrors::StringErrors(
             "'dir_Compile' path isn't specified in the config, aborting!".to_string(),
         ));
     };
-    let Some(dir_classes) = app_config.get(GLOBAL_SECTION_NAME, "dir_Classes") else {
+    let Some(dir_source_files) = app_config.get(GLOBAL_SECTION_NAME, "dir_Classes") else {
         return Err(CompileToolErrors::StringErrors(
             "'dir_Classes' path isn't specified in the config, aborting!".to_string(),
         ));
@@ -139,12 +140,11 @@ pub fn get_global_section(app_config: &Ini) -> Result<GlobalSection, CompileTool
 
     let result: GlobalSection = GlobalSection {
         package_name,
-        dir_compiler: dir_compile,
-        dir_source_files: dir_classes,
+        dir_compiler,
+        dir_source_files,
         dir_copy_to: app_config.get(GLOBAL_SECTION_NAME, "dir_MoveTo"),
         dir_release_output: app_config.get(GLOBAL_SECTION_NAME, "dir_ReleaseOutput"),
     };
-
     Ok(result)
 }
 
@@ -196,6 +196,5 @@ pub fn get_local_section(
             .map_err(CompileToolErrors::StringErrors)?
             .unwrap_or_default(),
     };
-
     Ok(result)
 }
