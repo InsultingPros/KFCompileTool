@@ -130,7 +130,15 @@ fn main() -> ExitCode {
     };
 
     match run(&runtime_vars) {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(()) => {
+            if env_arguments.hold {
+                println!("Press ENTER to continue...");
+                std::io::stdin()
+                    .read_line(&mut String::new())
+                    .expect("error: unable to read user input");
+            }
+            ExitCode::SUCCESS
+        }
         Err(e) => {
             eprintln!("Terminated with error: {e}");
             if let Err(e) = cleanup_leftover_files(&runtime_vars) {

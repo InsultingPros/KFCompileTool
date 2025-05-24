@@ -6,6 +6,8 @@ pub struct MyOptions {
     /// `-h` : print help information.
     #[options(help = "Prints the help message.")]
     pub help: bool,
+    #[options(no_short, help = "Waits for user input.")]
+    pub hold: bool,
     #[options(free)]
     pub mod_name: Vec<String>,
 }
