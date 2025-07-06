@@ -12,3 +12,4 @@ target/
 
 kfcompile.ini
 kf_compile_tool.ini
+/.idea

@@ -1,6 +1,7 @@
 use crate::{
     RuntimeVariables,
     errors::CompileToolErrors,
+    release_manager::zip_extension::zip_create_from_directory_with_options,
     utility::{copy_file_if_exists, print_fancy_block},
 };
 use std::{
@@ -9,7 +10,8 @@ use std::{
     path::PathBuf,
 };
 use zip::{CompressionMethod, write::SimpleFileOptions};
-use zip_extensions::zip_create_from_directory_with_options;
+
+pub mod zip_extension;
 
 #[derive(Debug)]
 pub struct ReleaseOptions {
@@ -154,13 +156,14 @@ pub fn make_release(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolEr
     if !runtime_vars.mod_settings.make_release {
         return Ok(());
     }
-    if let Some(path) = &runtime_vars.paths.output_location {
-        if !path.exists() {
-            return Err(CompileToolErrors::StringErrors(format!(
-                "You try to make a release for {}, but you didn't specify `dir_ReleaseOutput` variable in config file!",
-                runtime_vars.mod_settings.package_name
-            )));
-        }
+
+    if let Some(path) = &runtime_vars.paths.output_location
+        && !path.exists()
+    {
+        return Err(CompileToolErrors::StringErrors(format!(
+            "You try to make a release for {}, but you didn't specify `dir_ReleaseOutput` variable in config file!",
+            runtime_vars.mod_settings.package_name
+        )));
     }
 
     print_fancy_block("Create Release");

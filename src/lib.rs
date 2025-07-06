@@ -4,13 +4,10 @@ use config_manager::app_config::{GlobalSection, ModSection};
 use std::{path::PathBuf, rc::Rc};
 
 pub mod cli;
-pub mod compressor;
 pub mod config_manager;
 pub mod errors;
-pub mod post_pass;
-pub mod pre_pass;
 pub mod release_manager;
-pub mod ucc_wrapper;
+pub mod stages;
 pub mod utility;
 
 /// KF1 file extensions.
