@@ -154,13 +154,14 @@ pub fn make_release(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolEr
     if !runtime_vars.mod_settings.make_release {
         return Ok(());
     }
-    if let Some(path) = &runtime_vars.paths.output_location {
-        if !path.exists() {
-            return Err(CompileToolErrors::StringErrors(format!(
-                "You try to make a release for {}, but you didn't specify `dir_ReleaseOutput` variable in config file!",
-                runtime_vars.mod_settings.package_name
-            )));
-        }
+
+    if let Some(path) = &runtime_vars.paths.output_location
+        && !path.exists()
+    {
+        return Err(CompileToolErrors::StringErrors(format!(
+            "You try to make a release for {}, but you didn't specify `dir_ReleaseOutput` variable in config file!",
+            runtime_vars.mod_settings.package_name
+        )));
     }
 
     print_fancy_block("Create Release");

@@ -15,7 +15,7 @@ use std::process::{ChildStdout, Command, Stdio};
 ///
 /// Will return `Err` if `filename` does not exist or the user does not have
 /// permission to read it.
-pub fn ucc_compile(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
+fn compile(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
     print_fancy_block("Start compilation");
 
     let mut child = Command::new(runtime_vars.paths.ucc_exe.as_ref())
@@ -48,10 +48,7 @@ pub fn ucc_compile(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErr
     Ok(())
 }
 
-/// _
-/// # Errors
-/// _
-pub fn ucc_dumpint(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
+fn dumpint(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
     if !runtime_vars.mod_settings.create_int {
         return Ok(());
     }
@@ -90,7 +87,7 @@ pub fn ucc_dumpint(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErr
     Ok(())
 }
 
-pub fn print_stdout(child: ChildStdout) {
+fn print_stdout(child: ChildStdout) {
     // create a BufReader to show the stdout in real time
     let reader = BufReader::new(child);
     // show the output in real time
@@ -98,4 +95,14 @@ pub fn print_stdout(child: ChildStdout) {
         .lines()
         .map_while(Result::ok)
         .for_each(|line| println!("{line}"));
+}
+
+/// _
+/// # Errors
+/// _
+pub fn run(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
+    compile(runtime_vars)?;
+    dumpint(runtime_vars)?;
+
+    Ok(())
 }
