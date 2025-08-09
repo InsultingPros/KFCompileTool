@@ -8,6 +8,7 @@ edition = "2024"
 configparser = "3.*"
 gumdrop = "0.8.*"
 kfuz2_lib = "1.6"
+tempfile = { version = "3", default-features = false }
 thiserror = "2.*"
 walkdir = "2.*"
 zip = { version = "4", default-features = false, features = [

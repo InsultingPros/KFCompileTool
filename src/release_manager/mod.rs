@@ -9,6 +9,7 @@ use std::{
     io::{Error, ErrorKind},
     path::PathBuf,
 };
+use tempfile::NamedTempFile;
 use zip::{CompressionMethod, write::SimpleFileOptions};
 
 pub mod zip_extension;
@@ -132,17 +133,18 @@ pub fn compress_release_folder(release_options: &ReleaseOptions) -> Result<(), C
     }
 
     let zip_options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
-    let tmp_release_zip = &release_options.path_output.join(&release_options.zip_name);
+    let tmp_release_zip = NamedTempFile::new()?;
 
-    zip_create_from_directory_with_options(tmp_release_zip, &release_options.path_mod, |_| {
-        zip_options
-    })?;
+    zip_create_from_directory_with_options(
+        &tmp_release_zip.path().to_path_buf(),
+        &release_options.path_mod,
+        |_| zip_options,
+    )?;
 
     std::fs::copy(
         tmp_release_zip,
         release_options.path_mod.join(&release_options.zip_name),
     )?;
-    std::fs::remove_file(tmp_release_zip)?;
     Ok(())
 }
 
