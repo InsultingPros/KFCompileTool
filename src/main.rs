@@ -1,8 +1,5 @@
 use kf_compile_tool::stages::run;
-use kf_compile_tool::{
-    RuntimeVariables, cli::MyOptions, config_manager::app_config::parse_app_config,
-    stages::post_pass::cleanup_leftover_files,
-};
+use kf_compile_tool::{RuntimeVariables, app_config::parse_app_config, cli::MyOptions};
 use std::process::ExitCode;
 
 #[cfg(target_os = "windows")]
@@ -24,9 +21,6 @@ fn main() -> ExitCode {
         }
         Err(e) => {
             eprintln!("Terminated with error: {e}");
-            if let Err(e) = cleanup_leftover_files(&mut runtime_vars) {
-                eprintln!("failed to cleanup leftover files: {e}");
-            }
             press_enter(&env_arguments);
             ExitCode::FAILURE
         }

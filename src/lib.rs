@@ -1,13 +1,14 @@
-use crate::config_manager::kf_config::COMPILATION_CONFIG_NAME;
-use crate::config_manager::steam_appid::STEAM_APPID_TXT;
-use config_manager::app_config::{GlobalSection, ModSection};
+use crate::traits::kf_config::COMPILATION_CONFIG_NAME;
+use crate::traits::steam_appid::STEAM_APPID_TXT;
+use app_config::{GlobalSection, ModSection};
 use std::{path::PathBuf, rc::Rc};
 
+pub mod app_config;
 pub mod cli;
-pub mod config_manager;
 pub mod errors;
 pub mod release_manager;
 pub mod stages;
+pub mod traits;
 pub mod utility;
 
 /// KF1 file extensions.

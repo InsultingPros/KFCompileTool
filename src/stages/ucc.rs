@@ -1,4 +1,4 @@
-use crate::config_manager::kf_config::COMPILATION_CONFIG_NAME;
+use crate::traits::kf_config::COMPILATION_CONFIG_NAME;
 use crate::utility::print_fancy_block;
 use crate::{RuntimeVariables, errors::CompileToolErrors};
 use std::io::{BufRead, BufReader, Error};
