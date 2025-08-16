@@ -1,38 +1,11 @@
 use crate::{
     RuntimeVariables, SourcesCopied,
     errors::CompileToolErrors,
+    kf_config::KFConfig,
+    steam_appid::SteamAppID,
     utility::{copy_file, source_folder_conflict_resolver},
 };
 use std::fs;
-
-/// _
-/// # Errors
-/// _
-pub fn remove_kf_ini(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
-    if runtime_vars.paths.temp_kf_ini.try_exists()? {
-        fs::remove_file(&runtime_vars.paths.temp_kf_ini)?;
-    }
-    Ok(())
-}
-
-/// _
-/// # Errors
-/// _
-#[allow(clippy::permissions_set_readonly_false)]
-pub fn remove_steam_appid(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
-    // steamappid.txt
-    if runtime_vars.paths.temp_steam_appid.try_exists()? {
-        let steamapp_id = runtime_vars.paths.temp_steam_appid.as_ref();
-
-        let metadata = fs::metadata(steamapp_id)?;
-        let mut permissions = metadata.permissions();
-        permissions.set_readonly(false);
-        fs::set_permissions(steamapp_id, permissions)?;
-        fs::remove_file(steamapp_id)?;
-    }
-
-    Ok(())
-}
 
 /// _
 /// # Errors
@@ -84,9 +57,9 @@ pub fn cleanup_leftover_files(
     runtime_vars: &mut RuntimeVariables,
 ) -> Result<(), CompileToolErrors> {
     // 1. remove temp kfcompile.ini
-    remove_kf_ini(runtime_vars)?;
+    runtime_vars.remove_kf_ini()?;
     // 2. remove temp steam_appid.txt
-    remove_steam_appid(runtime_vars)?;
+    runtime_vars.remove_steam_appid()?;
     // 3. handle alt style source code organization
     handle_alt_style_directories(runtime_vars)?;
     // 4. handle external sources dir case

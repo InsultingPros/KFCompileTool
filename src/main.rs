@@ -1,6 +1,6 @@
 use kf_compile_tool::stages::run;
 use kf_compile_tool::{
-    RuntimeVariables, cli::MyOptions, config_manager::app_config::parse_app_config,
+    RuntimeVariables, app_config::parse_app_config, cli::MyOptions,
     stages::post_pass::cleanup_leftover_files,
 };
 use std::process::ExitCode;

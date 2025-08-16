@@ -152,3 +152,47 @@ pub fn source_folder_conflict_resolver(runtime_variables: &mut RuntimeVariables)
     );
     std::process::exit(0);
 }
+
+#[derive(Debug)]
+pub enum FileEditPermission {
+    ReadOnly,
+    Write,
+}
+
+impl FileEditPermission {
+    /// Returns true if the permission is readonly
+    const fn is_readonly(&self) -> bool {
+        matches!(self, Self::ReadOnly)
+    }
+}
+
+/// _
+/// # Errors
+/// _
+pub fn set_file_readonly<P: AsRef<Path>>(
+    file: P,
+    permission: &FileEditPermission,
+) -> Result<(), CompileToolErrors> {
+    let file_path = file.as_ref();
+
+    let metadata = fs::metadata(file_path).map_err(|e| {
+        eprintln!(
+            "Failed to retrieve metadata from file {}",
+            file_path.display()
+        );
+        CompileToolErrors::IOError(e)
+    })?;
+
+    let mut permissions = metadata.permissions();
+    permissions.set_readonly(permission.is_readonly());
+
+    fs::set_permissions(file_path, permissions).map_err(|e| {
+        eprintln!(
+            "Failed to set {permission:?} permission for file {}",
+            file_path.display()
+        );
+        CompileToolErrors::IOError(e)
+    })?;
+
+    Ok(())
+}
