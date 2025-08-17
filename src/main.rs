@@ -5,6 +5,13 @@ use std::process::ExitCode;
 #[cfg(target_os = "windows")]
 fn main() -> ExitCode {
     let env_arguments: MyOptions = gumdrop::Options::parse_args_default_or_exit();
+
+    // Set up Ctrl+C handler
+    ctrlc::set_handler(move || {
+        println!("\nReceived Ctrl+C, cleaning up...");
+    })
+    .expect("Error setting Ctrl-C handler");
+
     let mut runtime_vars: RuntimeVariables = match parse_app_config(&env_arguments) {
         Ok(result) => result,
         Err(e) => {

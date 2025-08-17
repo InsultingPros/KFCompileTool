@@ -6,6 +6,7 @@ edition = "2024"
 
 [dependencies]
 configparser = "3.*"
+ctrlc = "3"
 gumdrop = "0.8.*"
 kfuz2_lib = "1.6"
 tempfile = { version = "3", default-features = false }
