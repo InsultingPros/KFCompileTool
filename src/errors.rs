@@ -19,3 +19,9 @@ pub enum CompileToolErrors {
     #[error(transparent)]
     Uz2LibErrors(#[from] UZ2LibErrors),
 }
+
+impl From<String> for CompileToolErrors {
+    fn from(s: String) -> Self {
+        Self::StringErrors(s)
+    }
+}

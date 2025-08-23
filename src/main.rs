@@ -1,5 +1,6 @@
+use kf_compile_tool::app_config::parser::parse_config;
 use kf_compile_tool::stages::run;
-use kf_compile_tool::{RuntimeVariables, app_config::parse_app_config, cli::MyOptions};
+use kf_compile_tool::{RuntimeVariables, cli::MyOptions};
 use std::process::ExitCode;
 
 #[cfg(target_os = "windows")]
@@ -12,8 +13,8 @@ fn main() -> ExitCode {
     })
     .expect("Error setting Ctrl-C handler");
 
-    let mut runtime_vars: RuntimeVariables = match parse_app_config(&env_arguments) {
-        Ok(result) => result,
+    let mut runtime_vars: RuntimeVariables = match parse_config(&env_arguments) {
+        Ok(result) => RuntimeVariables::new(&result),
         Err(e) => {
             eprintln!("Terminated with error: {e}");
             press_enter(&env_arguments);

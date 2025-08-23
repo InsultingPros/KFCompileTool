@@ -1,6 +1,5 @@
-use crate::traits::kf_config::COMPILATION_CONFIG_NAME;
 use crate::traits::steam_appid::STEAM_APPID_TXT;
-use app_config::{GlobalSection, ModSection};
+use crate::{app_config::ConfigStruct, traits::kf_config::COMPILATION_CONFIG_NAME};
 use std::{path::PathBuf, rc::Rc};
 
 pub mod app_config;
@@ -42,24 +41,27 @@ pub struct ModSettings {
 }
 
 impl ModSettings {
-    fn new(global_section: &GlobalSection, local_section: &ModSection) -> Self {
+    fn new(parsed_config: &ConfigStruct) -> Self {
+        let global_section = &parsed_config.global_section;
+        let mod_section = &parsed_config.mod_section;
+
         Self {
             package_name: global_section.package_name.clone(),
             edit_packages: Rc::new(
-                local_section
+                mod_section
                     .edit_packages
                     .split(',')
                     .map(std::string::ToString::to_string)
                     .collect(),
             ),
-            create_int: local_section.create_int,
-            sources_are_somewhere_else: local_section.compile_outsideof_kf,
+            create_int: mod_section.create_int,
+            sources_are_somewhere_else: mod_section.compile_outsideof_kf,
             path_source_files: PathBuf::from(&global_section.dir_source_files)
                 .join(global_section.package_name.clone()),
-            alt_directories: local_section.alt_directories,
+            alt_directories: mod_section.alt_directories,
             copy_default_ini: true,
-            make_redirect: local_section.make_redirect,
-            make_release: local_section.make_release,
+            make_redirect: mod_section.make_redirect,
+            make_release: mod_section.make_release,
         }
     }
 }
@@ -112,7 +114,8 @@ pub struct CompilationPaths {
 }
 
 impl CompilationPaths {
-    fn new(global_section: &GlobalSection) -> Self {
+    fn new(parsed_config: &ConfigStruct) -> Self {
+        let global_section = &parsed_config.global_section;
         let compile_dir: PathBuf = PathBuf::from(global_section.dir_compiler.clone());
         let package_name = &global_section.package_name;
 
@@ -166,10 +169,11 @@ pub struct RuntimeVariables {
 }
 
 impl RuntimeVariables {
-    fn new(global_section: &GlobalSection, local_section: &ModSection) -> Self {
+    #[must_use]
+    pub fn new(parsed_config: &ConfigStruct) -> Self {
         Self {
-            mod_settings: ModSettings::new(global_section, local_section),
-            paths: CompilationPaths::new(global_section),
+            mod_settings: ModSettings::new(parsed_config),
+            paths: CompilationPaths::new(parsed_config),
             sources_copied_state: SourcesCopied::default(),
         }
     }
