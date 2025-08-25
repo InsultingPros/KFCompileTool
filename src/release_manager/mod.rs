@@ -159,9 +159,7 @@ pub fn make_release(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolEr
         return Ok(());
     }
 
-    if let Some(path) = &runtime_vars.paths.output_location
-        && !path.exists()
-    {
+    if runtime_vars.paths.output_location.is_none() {
         return Err(CompileToolErrors::StringErrors(format!(
             "You try to make a release for {}, but you didn't specify `dir_ReleaseOutput` variable in config file!",
             runtime_vars.mod_settings.package_name
