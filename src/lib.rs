@@ -32,8 +32,8 @@ pub struct ModSettings {
     pub path_source_files: PathBuf,
     /// Use alternative source file organization.
     pub alt_directories: bool,
-    /// Copy default config or no?
-    pub copy_default_ini: bool,
+    /// Copy compiled files to defined kf directory
+    pub move_files: bool,
     /// Make an uz2 or no?
     pub make_redirect: bool,
     /// Make a release or no?
@@ -59,7 +59,7 @@ impl ModSettings {
             path_source_files: PathBuf::from(&global_section.dir_source_files)
                 .join(global_section.package_name.clone()),
             alt_directories: mod_section.alt_directories,
-            copy_default_ini: true,
+            move_files: mod_section.move_files,
             make_redirect: mod_section.make_redirect,
             make_release: mod_section.make_release,
         }

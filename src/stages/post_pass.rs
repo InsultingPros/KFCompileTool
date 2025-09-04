@@ -4,6 +4,10 @@ use crate::{RuntimeVariables, errors::CompileToolErrors, utility::copy_file};
 /// # Errors
 /// _
 pub fn copy_files_to_another_kf(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
+    if !runtime_vars.mod_settings.move_files {
+        return Ok(());
+    }
+
     if let Some(kf_dir) = &runtime_vars.paths.path_where_to_copy {
         if !kf_dir.exists() {
             eprintln!(
