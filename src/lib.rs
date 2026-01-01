@@ -9,7 +9,7 @@ pub mod errors;
 pub mod operations;
 pub mod release_manager;
 pub mod stages;
-pub mod utility;
+pub mod utils;
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Default)]

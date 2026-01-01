@@ -1,8 +1,5 @@
-use crate::{
-    RuntimeVariables,
-    errors::CompileToolErrors,
-    utility::{FileEditPermission, set_file_readonly},
-};
+use crate::utils::io::{FileEditPermission, set_file_readonly};
+use crate::{RuntimeVariables, errors::CompileToolErrors};
 use std::{fs::OpenOptions, io::Write as _, path::PathBuf};
 
 /// _
