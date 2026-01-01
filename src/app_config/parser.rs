@@ -1,8 +1,6 @@
-use super::{
-    APP_CONFIG_NAME, APP_CONFIG_TEMPLATE, ConfigStruct, GLOBAL_SECTION_NAME, GlobalSection,
-    ModSection,
-};
+use super::{ConfigStruct, GlobalSection, ModSection};
 use crate::cli::MyOptions;
+use crate::constants::config_files::{APP_CONFIG_NAME, APP_CONFIG_TEMPLATE, GLOBAL_SECTION_NAME};
 use crate::errors::CompileToolErrors;
 use configparser::ini::Ini;
 use std::{fs, path::Path};
@@ -12,7 +10,11 @@ use std::{fs, path::Path};
 /// _
 pub fn parse_config(env_arguments: &MyOptions) -> Result<ConfigStruct, CompileToolErrors> {
     let my_config: Ini = load_config()?;
+    let sections: Vec<String> = get_config_sections(&my_config)?;
+
+    validate_section_exists(&sections, "global")?;
     let global_section: GlobalSection = parse_global_section(&my_config, env_arguments)?;
+    validate_section_exists(&sections, &global_section.package_name)?;
     let mod_section: ModSection = parse_mod_section(&my_config, &global_section.package_name)?;
 
     Ok(ConfigStruct {
@@ -45,28 +47,10 @@ fn parse_global_section(
     config: &Ini,
     env_arguments: &MyOptions,
 ) -> Result<GlobalSection, CompileToolErrors> {
-    // check if we even have the section
-    let sections: Vec<String> = config.sections();
-
-    // no sections at all?
-    if sections.is_empty() {
-        return Err(CompileToolErrors::StringErrors(format!(
-            "There are no sections at all in {APP_CONFIG_NAME}! Check your config file"
-        )));
-    }
-    // no [Global]?
-    if !sections.contains(&"global".to_string()) {
-        return Err(CompileToolErrors::StringErrors(
-            "There is no `[Global]` section in the config! Fix your config file.".to_string(),
-        ));
-    }
-
-    // these ones are important, handle them
-    // let package_name: String;
     let package_name: String = if env_arguments.mod_name.is_empty() {
         get_cfg_string("mutatorName", config)?
     } else {
-        env_arguments.mod_name[0].to_string()
+        env_arguments.mod_name[0].clone()
     };
 
     let dir_compiler = get_cfg_string("dir_Compile", config)?;
@@ -86,12 +70,6 @@ fn parse_global_section(
 }
 
 fn parse_mod_section(config: &Ini, mod_section: &str) -> Result<ModSection, CompileToolErrors> {
-    if !config.sections().contains(&mod_section.to_lowercase()) {
-        return Err(CompileToolErrors::StringErrors(format!(
-            "Section named `{mod_section}` is not found in {APP_CONFIG_NAME}. Aborting!"
-        )));
-    }
-    // this one is important, handle it
     let Some(edit_packages) = config.get(mod_section, "EditPackages") else {
         return Err(CompileToolErrors::StringErrors(format!(
             "Key `EditPackages` is not found (or empty) in {APP_CONFIG_NAME}. Aborting!"
@@ -117,7 +95,6 @@ fn parse_mod_section(config: &Ini, mod_section: &str) -> Result<ModSection, Comp
     })
 }
 
-#[inline]
 fn get_cfg_string(key: &str, config: &Ini) -> Result<String, CompileToolErrors> {
     config.get(GLOBAL_SECTION_NAME, key).map_or_else(
         || {
@@ -129,15 +106,35 @@ fn get_cfg_string(key: &str, config: &Ini) -> Result<String, CompileToolErrors> 
     )
 }
 
-#[inline]
 fn get_cfg_bool_unwrap_or_default(key: &str, section: &str, config: &Ini) -> bool {
-    if let Ok(Some(result)) = config.getbool(section, key) {
-        return result;
+    if let Ok(Some(value)) = config.getbool(section, key) {
+        value
+    } else {
+        // there is a missing key in config file, warn the user and return the default
+        println!(
+            "#WARNING: Key `{key}` is not found in {APP_CONFIG_NAME}'s `{section}` section.\n\
+            We set it to false for this run, but it is desirable to fill it explicitely in config file.\n"
+        );
+        false
     }
-    // else there is a missing key in config file, warn the user and return the default
-    println!(
-        "#WARNING: Key `{key}` is not found in {APP_CONFIG_NAME}'s `{section}` section.\n\
-        We set it to false for this run, but it is desirable to fill it explicitely in config file.\n"
-    );
-    false
+}
+
+// Check if config has any sections at all
+fn get_config_sections(config: &Ini) -> Result<Vec<String>, CompileToolErrors> {
+    let sections: Vec<String> = config.sections();
+    if sections.is_empty() {
+        return Err(CompileToolErrors::StringErrors(format!(
+            "Aborting! No sections found in {APP_CONFIG_NAME}. Fix your config file."
+        )));
+    }
+    Ok(sections)
+}
+
+fn validate_section_exists(sections: &[String], section: &str) -> Result<(), CompileToolErrors> {
+    if !sections.iter().any(|s| s.eq_ignore_ascii_case(section)) {
+        return Err(CompileToolErrors::StringErrors(format!(
+            "Section [{section}] not found in {APP_CONFIG_NAME}. Aborting!"
+        )));
+    }
+    Ok(())
 }

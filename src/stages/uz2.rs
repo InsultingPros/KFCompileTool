@@ -1,6 +1,6 @@
 use crate::RuntimeVariables;
 use crate::errors::CompileToolErrors;
-use crate::utility::print_fancy_block;
+use crate::utils::print_fancy_block;
 use kfuz2_lib::helper::{PathChecks, try_to_compress};
 use kfuz2_lib::types::InputArguments;
 use std::fs;

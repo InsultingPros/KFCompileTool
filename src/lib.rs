@@ -1,21 +1,15 @@
-use crate::traits::steam_appid::STEAM_APPID_TXT;
-use crate::{app_config::ConfigStruct, traits::kf_config::COMPILATION_CONFIG_NAME};
+use crate::app_config::ConfigStruct;
+use crate::constants::{STEAM_APPID_TXT, config_files::COMPILATION_CONFIG_NAME};
 use std::{path::PathBuf, rc::Rc};
 
 pub mod app_config;
 pub mod cli;
+pub mod constants;
 pub mod errors;
+pub mod operations;
 pub mod release_manager;
 pub mod stages;
-pub mod traits;
-pub mod utility;
-
-/// KF1 file extensions.
-pub const UNREAL_PACKAGES: [&str; 4] = [".u", ".ucl", ".u.uz2", ".int"];
-/// Filter for files-directories, so we copy-paste only source files.
-pub const IGNORE_LIST: [&str; 4] = [".git", "*.md", "Docs", "LICENSE"];
-/// Alternative folder name, instead of `Classes`. Used to organize source files in a better way.
-pub const ALT_SOURCE_DIR_NAME: &str = "sources";
+pub mod utils;
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Default)]

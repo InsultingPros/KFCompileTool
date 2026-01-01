@@ -1,29 +1,5 @@
 pub mod parser;
 
-/// Default app config content.
-const APP_CONFIG_TEMPLATE: &str = r";= Home repo: https://github.com/InsultingPros/KFCompileTool
-[Global]
-mutatorName=BitCore
-dir_Compile=D:\Games\KF Dedicated Server
-dir_Classes=D:\Documents\Killing Floor Archive\03. Projects\Mods
-dir_Redirect=D:\Games\KF Dedicated Server\Redirect
-dir_MoveTo=D:\Games\SteamLibrary\steamapps\common\KillingFloor
-dir_ReleaseOutput=C:\Users\Pepe User\Desktop\Mutators
-
-[BitCore]
-EditPackages=BitCore
-bICompileOutsideofKF=True
-bAltDirectories=False
-bMoveFiles=False
-bCreateINT=True
-bMakeRedirect=True
-bMakeRelease=True
-";
-/// App config's global section name.
-pub const GLOBAL_SECTION_NAME: &str = "global";
-/// Config name.
-pub const APP_CONFIG_NAME: &str = "kf_compile_tool.ini";
-
 #[derive(Debug)]
 pub struct ConfigStruct {
     pub global_section: GlobalSection,

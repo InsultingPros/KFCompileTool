@@ -1,4 +1,4 @@
-use crate::{RuntimeVariables, errors::CompileToolErrors, utility::copy_file};
+use crate::{RuntimeVariables, errors::CompileToolErrors, utils::io::copy_file};
 
 /// _
 /// # Errors

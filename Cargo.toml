@@ -12,7 +12,7 @@ kfuz2_lib = "1.6"
 tempfile = { version = "3", default-features = false }
 thiserror = "2.*"
 walkdir = "2.*"
-zip = { version = "7", default-features = false, features = [
+zip = { version = "8", default-features = false, features = [
   "deflate-flate2-zlib-rs",
 ] }
 
