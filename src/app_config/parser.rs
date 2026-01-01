@@ -1,8 +1,6 @@
-use super::{
-    APP_CONFIG_NAME, APP_CONFIG_TEMPLATE, ConfigStruct, GLOBAL_SECTION_NAME, GlobalSection,
-    ModSection,
-};
+use super::{ConfigStruct, GlobalSection, ModSection};
 use crate::cli::MyOptions;
+use crate::constants::config_files::{APP_CONFIG_NAME, APP_CONFIG_TEMPLATE, GLOBAL_SECTION_NAME};
 use crate::errors::CompileToolErrors;
 use configparser::ini::Ini;
 use std::{fs, path::Path};
@@ -66,7 +64,7 @@ fn parse_global_section(
     let package_name: String = if env_arguments.mod_name.is_empty() {
         get_cfg_string("mutatorName", config)?
     } else {
-        env_arguments.mod_name[0].to_string()
+        env_arguments.mod_name[0].clone()
     };
 
     let dir_compiler = get_cfg_string("dir_Compile", config)?;

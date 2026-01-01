@@ -1,8 +1,10 @@
 use crate::{
     RuntimeVariables,
     errors::CompileToolErrors,
-    release_manager::zip_extension::zip_create_from_directory_with_options,
-    utility::{copy_file_if_exists, print_fancy_block},
+    utils::{
+        io::copy_file_if_exists, print_fancy_block,
+        zip_extension::zip_create_from_directory_with_options,
+    },
 };
 use std::{
     fs,
@@ -11,8 +13,6 @@ use std::{
 };
 use tempfile::NamedTempFile;
 use zip::{CompressionMethod, write::SimpleFileOptions};
-
-pub mod zip_extension;
 
 #[derive(Debug)]
 pub struct ReleaseOptions {

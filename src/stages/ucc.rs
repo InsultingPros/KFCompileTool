@@ -1,5 +1,5 @@
-use crate::traits::kf_config::COMPILATION_CONFIG_NAME;
-use crate::utility::print_fancy_block;
+use crate::constants::config_files::COMPILATION_CONFIG_NAME;
+use crate::utils::print_fancy_block;
 use crate::{RuntimeVariables, errors::CompileToolErrors};
 use std::io::{BufRead, BufReader, Error};
 use std::process::{ChildStdout, Command, Stdio};
