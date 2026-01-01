@@ -1,8 +1,8 @@
 use crate::{
-    ALT_SOURCE_DIR_NAME, RuntimeVariables, SourcesCopied,
+    RuntimeVariables, SourcesCopied,
+    constants::ALT_SOURCE_DIR_NAME,
     errors::CompileToolErrors,
-    traits::kf_config::KFConfig,
-    traits::steam_appid::SteamAppID,
+    traits::{kf_config::KFConfig, steam_appid::SteamAppID},
     utility::{
         copy_directory, copy_file, delete_file, get_walkdir_iterator,
         source_folder_conflict_resolver,

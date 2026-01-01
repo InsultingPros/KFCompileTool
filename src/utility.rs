@@ -1,12 +1,12 @@
-use crate::{RuntimeVariables, SourcesCopied, errors::CompileToolErrors};
+use crate::{
+    RuntimeVariables, SourcesCopied, constants::LINE_SEPARATOR, errors::CompileToolErrors,
+};
 use std::{
     fs,
     io::ErrorKind,
     path::{Path, PathBuf},
 };
 use walkdir::{DirEntry, WalkDir};
-
-const LINE_SEPARATOR: &str = "\n######################################################\n";
 
 pub fn print_fancy_block(input: &str) {
     println!("{LINE_SEPARATOR}{input}{LINE_SEPARATOR}");
