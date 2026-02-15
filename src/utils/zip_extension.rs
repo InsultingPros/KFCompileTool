@@ -1,4 +1,5 @@
 /// Source: <https://github.com/matzefriedrich/zip-extensions-rs>
+/// License: MIT
 use std::fs::File;
 use std::io;
 use std::io::{Read, Write};

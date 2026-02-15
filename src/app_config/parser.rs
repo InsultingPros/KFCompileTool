@@ -138,3 +138,45 @@ fn validate_section_exists(sections: &[String], section: &str) -> Result<(), Com
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn missing_global_section() {
+        let mut my_config: Ini = Ini::new();
+        my_config.load("tests//no_global_config.ini").unwrap();
+        let sections: Vec<String> = get_config_sections(&my_config).unwrap();
+        let result = validate_section_exists(&sections, "global").is_err();
+        if result {
+            let err = validate_section_exists(&sections, "global").unwrap_err();
+            println!("{err}");
+        }
+
+        assert!(result);
+    }
+
+    #[test]
+    fn missing_mod_section() {
+        let mut my_config: Ini = Ini::new();
+        my_config.load("tests//no_mod_config.ini").unwrap();
+        let sections: Vec<String> = get_config_sections(&my_config).unwrap();
+        let result = validate_section_exists(&sections, "bitcore").is_err();
+        if result {
+            let err = validate_section_exists(&sections, "bitcore").unwrap_err();
+            println!("{err}");
+        }
+
+        assert!(result);
+    }
+
+    #[test]
+    fn missing_optional_key() {
+        let mut my_config: Ini = Ini::new();
+        my_config
+            .load("tests//missing_optional_key_config.ini")
+            .unwrap();
+        assert!(parse_mod_section(&my_config, "Bitcore").is_ok());
+    }
+}
