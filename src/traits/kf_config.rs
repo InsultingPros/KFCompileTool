@@ -79,7 +79,7 @@ impl KFConfig for RuntimeVariables {
     fn create_kf_config(&self) -> Result<(), CompileToolErrors> {
         let mut new_content: String = COMPILATION_CONFIG_TEMPLATE.to_string();
 
-        for package in self.mod_settings.edit_packages.as_ref() {
+        for package in &self.mod_settings.edit_packages {
             // dbg!(package);
             writeln!(&mut new_content, "EditPackages={package}")?;
         }

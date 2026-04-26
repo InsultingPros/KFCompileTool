@@ -170,7 +170,7 @@ impl FileEditPermission {
 /// # Errors
 /// _
 pub fn set_file_readonly<P: AsRef<Path>>(
-    file: P,
+    file: &P,
     permission: &FileEditPermission,
 ) -> Result<(), CompileToolErrors> {
     let file_path = file.as_ref();

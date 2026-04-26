@@ -18,7 +18,7 @@ use std::process::{ChildStdout, Command, Stdio};
 fn compile(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
     print_fancy_block("Start compilation");
 
-    let mut child = Command::new(runtime_vars.paths.ucc_exe.as_ref())
+    let mut child = Command::new(&runtime_vars.paths.ucc_exe)
         .stdout(Stdio::piped())
         .arg("make")
         .arg(format!("ini={COMPILATION_CONFIG_NAME}"))

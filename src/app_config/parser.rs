@@ -66,7 +66,7 @@ fn parse_global_section(
     let package_name: String = if env_arguments.mod_name.is_empty() {
         get_cfg_string("mutatorName", config)?
     } else {
-        env_arguments.mod_name[0].to_string()
+        env_arguments.mod_name[0].clone()
     };
 
     let dir_compiler = get_cfg_string("dir_Compile", config)?;

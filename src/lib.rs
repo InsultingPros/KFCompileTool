@@ -1,6 +1,6 @@
 use crate::traits::steam_appid::STEAM_APPID_TXT;
 use crate::{app_config::ConfigStruct, traits::kf_config::COMPILATION_CONFIG_NAME};
-use std::{path::PathBuf, rc::Rc};
+use std::path::PathBuf;
 
 pub mod app_config;
 pub mod cli;
@@ -23,7 +23,7 @@ pub struct ModSettings {
     /// Mod package name.
     pub package_name: String,
     /// Mod's `EditPackages`.
-    pub edit_packages: Rc<Vec<String>>,
+    pub edit_packages: Vec<String>,
     /// Create localization file.
     pub create_int: bool,
     /// Source files are somewhere else.
@@ -45,23 +45,23 @@ impl ModSettings {
         let global_section = &parsed_config.global_section;
         let mod_section = &parsed_config.mod_section;
 
+        let package_name = global_section.package_name.clone();
+
         Self {
-            package_name: global_section.package_name.clone(),
-            edit_packages: Rc::new(
-                mod_section
-                    .edit_packages
-                    .split(',')
-                    .map(std::string::ToString::to_string)
-                    .collect(),
-            ),
+            edit_packages: mod_section
+                .edit_packages
+                .split(',')
+                .map(std::string::ToString::to_string)
+                .collect(),
             create_int: mod_section.create_int,
             sources_are_somewhere_else: mod_section.compile_outsideof_kf,
-            path_source_files: PathBuf::from(&global_section.dir_source_files)
-                .join(global_section.package_name.clone()),
+            path_source_files: PathBuf::from(&global_section.dir_source_files).join(&package_name),
             alt_directories: mod_section.alt_directories,
             move_files: mod_section.move_files,
             make_redirect: mod_section.make_redirect,
             make_release: mod_section.make_release,
+
+            package_name,
         }
     }
 }
@@ -79,12 +79,12 @@ pub struct CompilationPaths {
     pub compile_dir_sources: PathBuf,
 
     /// Path to `UCC.exe`. For example "D:\\Dedicated Server\\System\\UCC.exe".
-    pub ucc_exe: Rc<PathBuf>,
+    pub ucc_exe: PathBuf,
     /// Path to temporary kf.ini. For example "D:\\Dedicated Server\\System\\kfcompile.ini".
     pub temp_kf_ini: PathBuf,
     /// Path to hacked `steam_appid.txt`. For example "D:\\Dedicated Server\\System\\`steam_appid.txt`".
     /// # Should be deleted after compilation attempt!
-    pub temp_steam_appid: Rc<PathBuf>,
+    pub temp_steam_appid: PathBuf,
 
     /// Path to compiled binary file. For example "D:\\Dedicated Server\\System\\`PACKAGE_NAME`.u".
     pub path_package_u: PathBuf,
@@ -94,8 +94,6 @@ pub struct CompilationPaths {
     pub path_package_int: PathBuf,
     /// Path to compiled mod's redirect file. For example "D:\\Dedicated Server\\Redirect\\`PACKAGE_NAME`.uz2".
     pub path_package_uz2: PathBuf,
-    /// Path to initially created redirect file ("D:\\Dedicated Server\\System\\`PACKAGE_NAME`.uz2"). Should be deleted or moved!
-    pub path_package_uz2_init: PathBuf,
     /// Path to compiled mod's redirect file. For example "D:\\Dedicated Server\\System\\`PACKAGE_NAME`.ini".
     pub path_package_ini: PathBuf,
 
@@ -116,31 +114,37 @@ pub struct CompilationPaths {
 impl CompilationPaths {
     fn new(parsed_config: &ConfigStruct) -> Self {
         let global_section = &parsed_config.global_section;
-        let compile_dir: PathBuf = PathBuf::from(global_section.dir_compiler.clone());
+        let compile_dir: PathBuf = PathBuf::from(&global_section.dir_compiler);
         let package_name = &global_section.package_name;
 
+        let u = format!("{package_name}.u");
+        let ucl = format!("{package_name}.ucl");
+        let uz2 = format!("{package_name}.u.uz2");
+        let ini = format!("{package_name}.ini");
+        let int = format!("{package_name}.int");
+        let bind = compile_dir.join("System");
+        let system = bind.as_path();
+
         Self {
-            compile_dir: compile_dir.clone(),
-            compile_dir_system: compile_dir.join("System"),
+            compile_dir_system: system.to_path_buf(),
             compile_dir_redirect: compile_dir.join("Redirect"),
             compile_dir_sources: compile_dir.join(package_name),
 
-            ucc_exe: Rc::new(compile_dir.join("System").join("UCC.exe")),
-            temp_kf_ini: compile_dir.join("System").join(COMPILATION_CONFIG_NAME),
-            temp_steam_appid: Rc::new(compile_dir.join(format!("System\\{STEAM_APPID_TXT}"))),
+            ucc_exe: system.join("UCC.exe"),
+            temp_kf_ini: system.join(COMPILATION_CONFIG_NAME),
+            temp_steam_appid: system.join(STEAM_APPID_TXT),
 
-            path_package_u: compile_dir.join(format!("System\\{package_name}.u")),
-            path_package_ucl: compile_dir.join(format!("System\\{package_name}.ucl")),
-            path_package_uz2: compile_dir.join(format!("Redirect\\{package_name}.u.uz2")),
-            path_package_uz2_init: compile_dir.join(format!("System\\{package_name}.u.uz2")),
-            path_package_int: compile_dir.join(format!("System\\{package_name}.int")),
-            path_package_ini: compile_dir.join(format!("System\\{package_name}.ini")),
+            path_package_u: system.join(&u),
+            path_package_ucl: system.join(&ucl),
+            path_package_uz2: system.join(&uz2),
+            path_package_int: system.join(&int),
+            path_package_ini: system.join(&ini),
 
-            name_package_u: format!("{package_name}.u"),
-            name_package_ucl: format!("{package_name}.ucl"),
-            name_package_uz2: format!("{package_name}.u.uz2"),
-            name_package_ini: format!("{package_name}.ini"),
-            name_package_int: format!("{package_name}.int"),
+            name_package_u: u,
+            name_package_ucl: ucl,
+            name_package_uz2: uz2,
+            name_package_ini: ini,
+            name_package_int: int,
 
             output_location: global_section
                 .dir_release_output
@@ -148,6 +152,8 @@ impl CompilationPaths {
                 .map(PathBuf::from),
             path_where_to_copy: global_section.dir_copy_to.as_ref().map(PathBuf::from),
             path_redirect: global_section.dir_redirect.as_ref().map(PathBuf::from),
+
+            compile_dir,
         }
     }
 }

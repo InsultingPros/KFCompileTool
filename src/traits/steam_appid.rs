@@ -22,7 +22,7 @@ pub trait SteamAppID {
 
 impl SteamAppID for RuntimeVariables {
     fn create_hacky_steamappid(&self) -> Result<(), CompileToolErrors> {
-        let steam_appid_file: &PathBuf = self.paths.temp_steam_appid.as_ref();
+        let steam_appid_file: &PathBuf = &self.paths.temp_steam_appid;
         // remove the file if it exists
         if steam_appid_file.try_exists()? {
             // Set file attributes to normal (removing read-only)
@@ -46,12 +46,8 @@ impl SteamAppID for RuntimeVariables {
     fn remove_steam_appid(&self) -> Result<(), CompileToolErrors> {
         // steamappid.txt
         if self.paths.temp_steam_appid.try_exists()? {
-            set_file_readonly(
-                self.paths.temp_steam_appid.as_ref(),
-                &FileEditPermission::Write,
-            )?;
-
-            std::fs::remove_file(self.paths.temp_steam_appid.as_ref())?;
+            set_file_readonly(&self.paths.temp_steam_appid, &FileEditPermission::Write)?;
+            std::fs::remove_file(&self.paths.temp_steam_appid)?;
         }
 
         Ok(())
