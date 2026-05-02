@@ -3,7 +3,6 @@ use kf_compile_tool::stages::run;
 use kf_compile_tool::{RuntimeVariables, cli::MyOptions};
 use std::process::ExitCode;
 
-#[cfg(target_os = "windows")]
 fn main() -> ExitCode {
     let env_arguments: MyOptions = gumdrop::Options::parse_args_default_or_exit();
 
@@ -44,9 +43,4 @@ fn press_enter(env_arguments: &MyOptions) {
     std::io::stdin()
         .read_line(&mut String::new())
         .expect("error: unable to read user input");
-}
-
-#[cfg(not(target_os = "windows"))]
-fn main() {
-    compile_error!("This code only compiles on Windows.");
 }

@@ -55,11 +55,20 @@ fn dumpint(runtime_vars: &RuntimeVariables) -> Result<(), CompileToolErrors> {
 
     print_fancy_block("Create localization file");
 
+    #[cfg(target_os = "windows")]
     let mut child = Command::new("cmd")
         .current_dir(runtime_vars.paths.compile_dir_system.as_path())
         .stdout(Stdio::piped())
         .arg("/C")
         .arg("UCC.exe")
+        .arg("dumpint")
+        .arg(&runtime_vars.paths.name_package_u)
+        .spawn()?;
+
+    #[cfg(target_os = "linux")]
+    let mut child = Command::new(&runtime_vars.paths.ucc_exe)
+        .current_dir(runtime_vars.paths.compile_dir_system.as_path())
+        .stdout(Stdio::piped())
         .arg("dumpint")
         .arg(&runtime_vars.paths.name_package_u)
         .spawn()?;
