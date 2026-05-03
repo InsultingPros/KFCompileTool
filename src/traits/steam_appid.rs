@@ -6,9 +6,6 @@ use crate::{
     utils::io::{FileEditPermission, set_file_readonly},
 };
 
-/// Included default config file.
-pub const STEAM_APPID_TXT: &str = "steam_appid.txt";
-
 pub trait SteamAppID {
     /// _
     /// # Errors

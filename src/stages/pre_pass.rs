@@ -1,5 +1,6 @@
 use crate::{
-    ALT_SOURCE_DIR_NAME, RuntimeVariables, SourcesCopied,
+    RuntimeVariables, SourcesCopied,
+    constants::ALT_SOURCE_DIR_NAME,
     errors::CompileToolErrors,
     traits::kf_config::KFConfig,
     traits::steam_appid::SteamAppID,

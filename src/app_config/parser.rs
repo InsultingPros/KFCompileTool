@@ -1,8 +1,6 @@
-use super::{
-    APP_CONFIG_NAME, APP_CONFIG_TEMPLATE, ConfigStruct, GLOBAL_SECTION_NAME, GlobalSection,
-    ModSection,
-};
+use super::{ConfigStruct, GlobalSection, ModSection};
 use crate::cli::MyOptions;
+use crate::constants::config_files::{APP_CONFIG_NAME, APP_CONFIG_TEMPLATE, GLOBAL_SECTION_NAME};
 use crate::errors::CompileToolErrors;
 use configparser::ini::Ini;
 use std::{fs, path::Path};
