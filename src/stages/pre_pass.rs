@@ -2,10 +2,11 @@ use crate::{
     RuntimeVariables, SourcesCopied,
     constants::ALT_SOURCE_DIR_NAME,
     errors::CompileToolErrors,
-    traits::kf_config::KFConfig,
-    traits::steam_appid::SteamAppID,
-    utils::conflict_resolver::source_folder_conflict_resolver,
-    utils::io::{copy_directory, copy_file, delete_file, get_walkdir_iterator},
+    operations::{kf_config::create_kf_config, steam_appid::create_hacky_steamappid},
+    utils::{
+        conflict_resolver::source_folder_conflict_resolver,
+        io::{copy_directory, copy_file, delete_file, get_walkdir_iterator},
+    },
 };
 use std::{
     fs,
@@ -174,9 +175,9 @@ pub fn run(runtime_vars: &mut RuntimeVariables) -> Result<(), CompileToolErrors>
     // 5. Delete older binary files before
     delete_old_binaries(runtime_vars);
     // 6. Create temporary kfcompile.ini
-    runtime_vars.create_kf_config()?;
+    create_kf_config(runtime_vars)?;
     // 7. Create temporary steam_appid.txt
-    runtime_vars.create_hacky_steamappid()?;
+    create_hacky_steamappid(runtime_vars)?;
 
     Ok(())
 }
