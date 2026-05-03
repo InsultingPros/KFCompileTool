@@ -1,6 +1,6 @@
 use crate::{
     RuntimeVariables, SourcesCopied, errors::CompileToolErrors,
-    utility::source_folder_conflict_resolver,
+    utils::conflict_resolver::source_folder_conflict_resolver,
 };
 
 impl RuntimeVariables {

@@ -8,7 +8,7 @@ pub mod errors;
 pub mod release_manager;
 pub mod stages;
 pub mod traits;
-pub mod utility;
+pub mod utils;
 
 /// KF1 file extensions.
 pub const UNREAL_PACKAGES: [&str; 4] = [".u", ".ucl", ".u.uz2", ".int"];

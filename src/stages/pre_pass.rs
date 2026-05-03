@@ -3,10 +3,8 @@ use crate::{
     errors::CompileToolErrors,
     traits::kf_config::KFConfig,
     traits::steam_appid::SteamAppID,
-    utility::{
-        copy_directory, copy_file, delete_file, get_walkdir_iterator,
-        source_folder_conflict_resolver,
-    },
+    utils::conflict_resolver::source_folder_conflict_resolver,
+    utils::io::{copy_directory, copy_file, delete_file, get_walkdir_iterator},
 };
 use std::{
     fs,

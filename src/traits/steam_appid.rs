@@ -3,7 +3,7 @@ use std::{fs::OpenOptions, io::Write as _, path::PathBuf};
 use crate::{
     RuntimeVariables,
     errors::CompileToolErrors,
-    utility::{FileEditPermission, set_file_readonly},
+    utils::io::{FileEditPermission, set_file_readonly},
 };
 
 /// Included default config file.
